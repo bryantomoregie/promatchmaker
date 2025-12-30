@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "bun --watch src/index.ts",
 		"start": "bun src/index.ts",
+		"build": "bun build src/index.ts --outdir dist --target node",
 		"test": "bun test --preload ./tests/setup.ts",
 		"test:watch": "bun test --watch --preload ./tests/setup.ts",
 		"test:coverage": "bun test --coverage --preload ./tests/setup.ts",
