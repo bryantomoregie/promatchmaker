@@ -105,11 +105,31 @@ export function createServer(apiClient: ApiClient) {
 	return server
 }
 
-// Only run server if this file is executed directly
-if (import.meta.main) {
+async function runServer() {
 	let config = await loadConfig()
 	let apiClient = new ApiClient(config)
 	let server = createServer(apiClient)
 	let transport = new StdioServerTransport()
+
+	// Set up signal handlers for graceful shutdown
+	let shutdown = async () => {
+		console.error("Shutting down MCP server...")
+		await transport.close()
+		process.exit(0)
+	}
+
+	process.on('SIGTERM', shutdown)
+	process.on('SIGINT', shutdown)
+
+	// Connect and start listening
 	await server.connect(transport)
+	console.error("MCP Server running on stdio")
+}
+
+// Run server with error handling
+if (import.meta.main) {
+	runServer().catch((error) => {
+		console.error("Fatal error in MCP server:", error)
+		process.exit(1)
+	})
 }
