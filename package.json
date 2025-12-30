@@ -1,0 +1,10 @@
+{
+	"name": "matchmaker-monorepo",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"test": "bun run test:backend && bun run test:mcp",
+		"test:backend": "cd backend && bun test",
+		"test:mcp": "cd mcp-server && bun run test"
+	}
+}
