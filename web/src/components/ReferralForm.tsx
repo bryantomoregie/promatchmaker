@@ -78,18 +78,20 @@ export function ReferralForm() {
 		<div className="w-full">
 			<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 				<Input
-					label="Your Name"
+					placeholder="Your Name"
 					type="text"
 					required
+					aria-label="Your Name"
 					{...register("single_name")}
 					error={errors.single_name?.message}
 					disabled={isSubmitting}
 				/>
 
 				<Input
-					label="Your Email"
+					placeholder="Your Email"
 					type="email"
 					required
+					aria-label="Your Email"
 					{...register("single_email")}
 					error={errors.single_email?.message}
 					disabled={isSubmitting}
@@ -99,8 +101,8 @@ export function ReferralForm() {
 					<div
 						className={`rounded-lg p-4 ${
 							submitStatus.type === "success"
-								? "bg-green-50 text-green-800"
-								: "bg-red-50 text-red-800"
+								? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+								: "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-300"
 						}`}
 					>
 						{submitStatus.message}

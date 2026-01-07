@@ -78,18 +78,20 @@ export function WaitlistForm() {
 		<div className="w-full">
 			<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 				<Input
-					label="Name"
+					placeholder="Name"
 					type="text"
 					required
+					aria-label="Name"
 					{...register("name")}
 					error={errors.name?.message}
 					disabled={isSubmitting}
 				/>
 
 				<Input
-					label="Email"
+					placeholder="Email"
 					type="email"
 					required
+					aria-label="Email"
 					{...register("email")}
 					error={errors.email?.message}
 					disabled={isSubmitting}
@@ -99,8 +101,8 @@ export function WaitlistForm() {
 					<div
 						className={`rounded-lg p-4 ${
 							submitStatus.type === "success"
-								? "bg-green-50 text-green-800"
-								: "bg-red-50 text-red-800"
+								? "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+								: "bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-300"
 						}`}
 					>
 						{submitStatus.message}
