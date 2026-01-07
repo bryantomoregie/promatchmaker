@@ -5,29 +5,29 @@ export function SmartNotesDemo() {
 		<section className="relative bg-gray-100 py-24 sm:py-32 dark:bg-gray-900/95">
 			{/* Bokeh burst effects */}
 			<div
-				className="pointer-events-none absolute left-20 top-20 h-[400px] w-[400px] blur-3xl"
+				className="pointer-events-none absolute left-10 top-20 h-[350px] w-[350px] opacity-[0.19] blur-3xl sm:left-20 sm:h-[450px] sm:w-[450px] sm:opacity-[0.24]"
 				style={{
 					background:
-						"radial-gradient(circle, rgba(14, 165, 233, 0.6) 0%, rgba(168, 85, 247, 0.4) 30%, transparent 60%)",
+						"radial-gradient(circle, rgba(14, 165, 233, 0.5) 0%, rgba(168, 85, 247, 0.3) 25%, rgba(99, 102, 241, 0.15) 40%, transparent 65%)",
 					animation: "bokehFloat 22s ease-in-out infinite",
 				}}
 				aria-hidden="true"
 			/>
 			<div
-				className="pointer-events-none absolute bottom-40 right-20 h-[500px] w-[500px] blur-3xl"
+				className="pointer-events-none absolute bottom-40 right-10 h-[400px] w-[400px] opacity-[0.2] blur-3xl sm:right-20 sm:h-[500px] sm:w-[500px] sm:opacity-[0.25]"
 				style={{
 					background:
-						"radial-gradient(circle, rgba(99, 102, 241, 0.7) 0%, rgba(14, 165, 233, 0.4) 30%, transparent 60%)",
+						"radial-gradient(circle, rgba(99, 102, 241, 0.5) 0%, rgba(14, 165, 233, 0.3) 25%, rgba(168, 85, 247, 0.15) 40%, transparent 65%)",
 					animation: "bokehFloatSlow 28s ease-in-out infinite",
 					animationDelay: "4s",
 				}}
 				aria-hidden="true"
 			/>
 			<div
-				className="pointer-events-none absolute right-1/3 top-1/2 h-[220px] w-[220px] blur-3xl"
+				className="pointer-events-none absolute right-1/3 top-1/2 h-[200px] w-[200px] opacity-[0.17] blur-3xl sm:h-[240px] sm:w-[240px] sm:opacity-[0.22]"
 				style={{
 					background:
-						"radial-gradient(circle, rgba(168, 85, 247, 0.6) 0%, rgba(99, 102, 241, 0.4) 30%, transparent 60%)",
+						"radial-gradient(circle, rgba(168, 85, 247, 0.5) 0%, rgba(99, 102, 241, 0.3) 25%, rgba(14, 165, 233, 0.15) 40%, transparent 65%)",
 					animation: "bokehFloat 18s ease-in-out infinite",
 					animationDelay: "7s",
 				}}
