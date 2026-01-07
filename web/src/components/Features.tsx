@@ -53,7 +53,7 @@ export function Features() {
 							great matchmaker
 						</span>
 					</h2>
-					<p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-400">
+					<p className="mt-6 font-display font-light text-lg leading-8 text-gray-600 dark:text-gray-400">
 						AI-assisted tools that help you make meaningful connections while
 						keeping you in complete control.
 					</p>
@@ -74,7 +74,7 @@ export function Features() {
 									</div>
 									{feature.name}
 								</dt>
-								<dd className="mt-4 text-base leading-7 text-gray-600 dark:text-gray-400">
+								<dd className="mt-4 font-display font-normal text-base leading-7 text-gray-600 dark:text-gray-400">
 									{feature.description}
 								</dd>
 							</div>

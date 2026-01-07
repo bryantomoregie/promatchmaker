@@ -35,7 +35,7 @@ export default function Home() {
 						<h2 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl">
 							Ready to get started?
 						</h2>
-						<p className="mt-6 text-lg text-gray-600 dark:text-gray-400">
+						<p className="mt-6 font-display font-light text-lg text-gray-600 dark:text-gray-400">
 							Join the waitlist and be the first to know when we launch
 						</p>
 					</div>
@@ -63,7 +63,7 @@ export default function Home() {
 											<h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
 												Join the Waitlist
 											</h2>
-											<p className="mt-3 text-gray-600 dark:text-gray-400">
+											<p className="mt-3 font-display font-normal text-gray-600 dark:text-gray-400">
 												For matchmakers who want to connect friends and family
 											</p>
 										</div>
@@ -100,7 +100,7 @@ export default function Home() {
 											<h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
 												Refer a Matchmaker
 											</h2>
-											<p className="mt-3 text-gray-600 dark:text-gray-400">
+											<p className="mt-3 font-display font-normal text-gray-600 dark:text-gray-400">
 												Know someone who loves playing matchmaker? Send them an
 												invite!
 											</p>
@@ -146,7 +146,7 @@ export default function Home() {
 							<h3 className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-2xl font-bold text-transparent dark:from-sky-400 dark:to-indigo-400">
 								The Introduction
 							</h3>
-							<p className="mt-2 text-base text-gray-600 dark:text-gray-400">
+							<p className="mt-2 font-display font-normal text-base text-gray-600 dark:text-gray-400">
 								Empowering matchmakers with AI-assisted tools
 							</p>
 						</div>

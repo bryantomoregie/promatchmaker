@@ -59,7 +59,7 @@ export function FAQ() {
 								Questions
 							</span>
 						</h2>
-						<p className="mt-6 text-lg text-gray-600 dark:text-gray-400">
+						<p className="mt-6 font-display font-light text-lg text-gray-600 dark:text-gray-400">
 							Everything you need to know about The Introduction
 						</p>
 					</div>
@@ -106,7 +106,7 @@ export function FAQ() {
 									}`}
 								>
 									<div className="px-6 pb-6 pl-[4.5rem]">
-										<p className="text-gray-600 dark:text-gray-400">
+										<p className="font-display font-normal text-gray-600 dark:text-gray-400">
 											{faq.answer}
 										</p>
 									</div>
@@ -117,7 +117,7 @@ export function FAQ() {
 
 					{/* Contact CTA */}
 					<div className="mt-16 text-center">
-						<p className="text-base text-gray-600 dark:text-gray-400">
+						<p className="font-display font-normal text-base text-gray-600 dark:text-gray-400">
 							Still have questions?{" "}
 							<a
 								href="mailto:hello@theintro.xyz"

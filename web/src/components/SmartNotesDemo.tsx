@@ -12,7 +12,7 @@ export function SmartNotesDemo() {
 							powerful results
 						</span>
 					</h2>
-					<p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-400">
+					<p className="mt-6 font-display font-light text-lg leading-8 text-gray-600 dark:text-gray-400">
 						Use The Introduction in Claude Chat, ChatGPT, or our mobile app
 						(coming soon)
 					</p>
@@ -95,7 +95,7 @@ export function SmartNotesDemo() {
 								<h4 className="mt-6 text-lg font-bold text-gray-900 dark:text-gray-100">
 									Choose your platform
 								</h4>
-								<p className="mt-3 text-base text-gray-600 dark:text-gray-400">
+								<p className="mt-3 font-display font-normal text-base text-gray-600 dark:text-gray-400">
 									Claude, ChatGPT, or mobile app (coming soon)
 								</p>
 							</div>
@@ -106,7 +106,7 @@ export function SmartNotesDemo() {
 								<h4 className="mt-6 text-lg font-bold text-gray-900 dark:text-gray-100">
 									Add people and details
 								</h4>
-								<p className="mt-3 text-base text-gray-600 dark:text-gray-400">
+								<p className="mt-3 font-display font-normal text-base text-gray-600 dark:text-gray-400">
 									Use natural conversation to keep track of friends and family
 								</p>
 							</div>
@@ -117,7 +117,7 @@ export function SmartNotesDemo() {
 								<h4 className="mt-6 text-lg font-bold text-gray-900 dark:text-gray-100">
 									Get smart suggestions
 								</h4>
-								<p className="mt-3 text-base text-gray-600 dark:text-gray-400">
+								<p className="mt-3 font-display font-normal text-base text-gray-600 dark:text-gray-400">
 									AI helps you make great matches - you make the final call
 								</p>
 							</div>

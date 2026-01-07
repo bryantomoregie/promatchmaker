@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+	subsets: ["latin"],
+	variable: "--font-inter"
+});
+
+const dmSans = DM_Sans({
+	subsets: ["latin"],
+	weight: ["300", "400", "500"],
+	variable: "--font-dm-sans"
+});
 
 export const metadata: Metadata = {
 	title: "The Introduction | Smart Notes for Matchmakers",
@@ -39,7 +48,7 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<body className={inter.className}>
+			<body className={`${inter.variable} ${dmSans.variable} font-sans`}>
 				<ThemeProvider>{children}</ThemeProvider>
 			</body>
 		</html>

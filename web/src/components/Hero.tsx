@@ -28,7 +28,7 @@ export function Hero() {
 					</h2>
 
 					{/* Subheadline */}
-					<p className="mt-8 text-xl leading-relaxed text-gray-600 dark:text-gray-400">
+					<p className="mt-8 font-display font-light text-xl leading-relaxed text-gray-600 dark:text-gray-400">
 						AI-powered smart notes that help you connect friends and family with
 						confidence. Work in Claude, ChatGPT, or our mobile app.
 					</p>
