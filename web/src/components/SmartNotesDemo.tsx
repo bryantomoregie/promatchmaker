@@ -2,7 +2,7 @@ import { Terminal } from "lucide-react";
 
 export function SmartNotesDemo() {
 	return (
-		<section className="relative bg-gradient-to-b from-gray-50 to-white py-24 sm:py-32 dark:from-gray-900 dark:to-gray-950">
+		<section className="relative bg-gray-100 py-24 sm:py-32 dark:bg-gray-900/95">
 			<div className="mx-auto max-w-7xl px-6 lg:px-8">
 				<div className="mx-auto max-w-2xl text-center">
 					<h2 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">

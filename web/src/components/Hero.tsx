@@ -11,7 +11,7 @@ export function Hero() {
 	};
 
 	return (
-		<section className="relative overflow-hidden bg-white py-24 sm:py-32 lg:py-40 dark:bg-gray-950">
+		<section className="relative overflow-hidden bg-gray-50 py-24 sm:py-32 lg:py-40 dark:bg-gray-900">
 			<div className="mx-auto max-w-7xl px-6 lg:px-8">
 				<div className="mx-auto max-w-3xl text-center">
 					{/* Brand Logo/Name */}

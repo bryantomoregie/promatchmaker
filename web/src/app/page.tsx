@@ -29,7 +29,7 @@ export default function Home() {
 			<FAQ />
 
 			{/* Waitlist Section */}
-			<section className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50 py-24 dark:from-gray-900 dark:via-indigo-950 dark:to-purple-950 sm:py-32">
+			<section className="relative overflow-hidden bg-gray-50 py-24 dark:bg-gray-900 sm:py-32">
 				<div className="container mx-auto px-4">
 					<div className="mx-auto max-w-2xl text-center">
 						<h2 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl">
@@ -139,7 +139,7 @@ export default function Home() {
 			</section>
 
 			{/* Footer */}
-			<footer className="border-t border-gray-200 bg-white py-16 dark:border-gray-800 dark:bg-gray-950">
+			<footer className="bg-gray-100 py-16 dark:bg-gray-900/95">
 				<div className="container mx-auto px-4">
 					<div className="flex flex-col items-center space-y-6">
 						<div className="text-center">

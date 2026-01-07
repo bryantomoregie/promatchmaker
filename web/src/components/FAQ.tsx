@@ -48,7 +48,7 @@ export function FAQ() {
 	};
 
 	return (
-		<section className="relative overflow-hidden bg-white py-24 sm:py-32 dark:bg-gray-950">
+		<section className="relative overflow-hidden bg-gray-100 py-24 sm:py-32 dark:bg-gray-900/95">
 			<div className="container mx-auto px-4">
 				<div className="mx-auto max-w-3xl">
 					{/* Header */}
