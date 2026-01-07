@@ -139,27 +139,27 @@ export default function Home() {
 			</section>
 
 			{/* Footer */}
-			<footer className="bg-gray-100 py-16 dark:bg-gray-900/95">
+			<footer className="border-t border-gray-200 bg-gray-100 py-20 dark:border-gray-800 dark:bg-gray-900/95">
 				<div className="container mx-auto px-4">
-					<div className="flex flex-col items-center space-y-6">
+					<div className="flex flex-col items-center space-y-8">
 						<div className="text-center">
-							<h3 className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-2xl font-bold text-transparent dark:from-sky-400 dark:to-indigo-400">
+							<h3 className="bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-3xl font-bold text-transparent dark:from-sky-400 dark:to-indigo-400">
 								The Introduction
 							</h3>
-							<p className="mt-2 font-display font-normal text-base text-gray-600 dark:text-gray-400">
+							<p className="mt-3 font-display font-normal text-lg text-gray-600 dark:text-gray-400">
 								Empowering matchmakers with AI-assisted tools
 							</p>
 						</div>
 						<div className="flex space-x-8 text-sm font-medium text-gray-500 dark:text-gray-400">
 							<a
 								href="#"
-								className="transition-colors hover:text-sky-600 dark:hover:text-sky-400"
+								className="relative transition-colors hover:text-sky-600 dark:hover:text-sky-400 after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-sky-600 after:transition-all hover:after:w-full dark:after:bg-sky-400"
 							>
 								Privacy Policy
 							</a>
 							<a
 								href="#"
-								className="transition-colors hover:text-sky-600 dark:hover:text-sky-400"
+								className="relative transition-colors hover:text-sky-600 dark:hover:text-sky-400 after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-sky-600 after:transition-all hover:after:w-full dark:after:bg-sky-400"
 							>
 								Terms
 							</a>
