@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Hero } from "@/components/Hero";
-import { SmartNotesDemo } from "@/components/SmartNotesDemo";
 import { Features } from "@/components/Features";
 import { FAQ } from "@/components/FAQ";
 import { WaitlistForm } from "@/components/WaitlistForm";
@@ -18,9 +17,6 @@ export default function Home() {
 		<main className="flex min-h-screen flex-col">
 			{/* Hero Section */}
 			<Hero />
-
-			{/* Smart Notes Demo Section */}
-			<SmartNotesDemo />
 
 			{/* Features Section */}
 			<Features />
