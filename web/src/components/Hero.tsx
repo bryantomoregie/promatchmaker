@@ -85,7 +85,7 @@ export function Hero() {
 								<Smartphone className="h-7 w-7 text-sky-500" />
 							</div>
 							<span className="text-sm text-gray-500 dark:text-gray-400">
-								Mobile App
+								Mobile
 							</span>
 						</div>
 					</div>
