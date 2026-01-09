@@ -278,4 +278,31 @@ describe('ApiClient', () => {
 		expect(result.id).toBe('770e8400-e29b-41d4-a716-446655440000')
 		expect(result.notes).toBe('Updated notes only')
 	})
+
+	test('findMatches(personId) makes GET with Bearer token', async () => {
+		let client = new ApiClient(config)
+		let result = await client.findMatches('550e8400-e29b-41d4-a716-446655440000')
+
+		expect(Array.isArray(result)).toBe(true)
+		// Currently returns empty array (placeholder algorithm)
+		expect(result.length).toBe(0)
+	})
+
+	test('findMatches(personId) validates personId is not empty', async () => {
+		let client = new ApiClient(config)
+		await expect(client.findMatches('')).rejects.toThrow('Person ID is required')
+	})
+
+	test('findMatches(personId) throws on 401 unauthorized', async () => {
+		let invalidClient = new ApiClient({
+			...config,
+			auth_token: 'invalid-token',
+		})
+		await expect(invalidClient.findMatches('test-person-id')).rejects.toThrow()
+	})
+
+	test('findMatches(personId) throws on 404 not found', async () => {
+		let client = new ApiClient(config)
+		await expect(client.findMatches('not-found-id')).rejects.toThrow('HTTP 404')
+	})
 })

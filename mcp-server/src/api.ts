@@ -5,6 +5,7 @@ import {
 	peopleListResponseSchema,
 	introductionResponseSchema,
 	introductionsListResponseSchema,
+	matchesListResponseSchema,
 } from './schemas'
 
 let addPersonInputSchema = z.object({
@@ -38,6 +39,10 @@ let updateIntroductionInputSchema = z.object({
 	notes: z.string().optional(),
 })
 
+let findMatchesInputSchema = z.object({
+	person_id: z.string().min(1, 'Person ID is required'),
+})
+
 export interface Person {
 	id: string
 	name: string
@@ -62,6 +67,17 @@ export interface Introduction {
 	notes?: string | null
 	created_at: string
 	updated_at: string
+}
+
+export interface Match {
+	person?: {
+		id: string
+		name: string
+		age?: number | null
+		location?: string | null
+	}
+	compatibility_score?: number
+	match_reasons?: string[]
 }
 
 export class ApiClient {
@@ -240,5 +256,23 @@ export class ApiClient {
 		}
 
 		return this.parseResponse(response, introductionResponseSchema)
+	}
+
+	async findMatches(personId: string): Promise<Match[]> {
+		// Validate input
+		findMatchesInputSchema.parse({ person_id: personId })
+
+		let response = await fetch(`${this.config.api_base_url}/api/matches/${personId}`, {
+			method: 'GET',
+			headers: {
+				Authorization: `Bearer ${this.config.auth_token}`,
+			},
+		})
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+		}
+
+		return this.parseResponse(response, matchesListResponseSchema)
 	}
 }

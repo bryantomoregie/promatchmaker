@@ -1,5 +1,5 @@
 import { describe, test, expect, mock } from 'bun:test'
-import type { ApiClient, Person, Introduction } from '../src/api'
+import type { ApiClient, Person, Introduction, Match } from '../src/api'
 
 function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 	return {
@@ -88,6 +88,7 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 				updated_at: new Date().toISOString(),
 			})
 		),
+		findMatches: mock(async (_personId: string): Promise<Match[]> => []),
 		...overrides,
 	} as unknown as ApiClient
 }
@@ -398,5 +399,20 @@ describe('MCP Server', () => {
 		expect(result.id).toBe('intro-uuid')
 		expect(result.status).toBe('dating')
 		expect(result.notes).toBe('They are now dating!')
+	})
+
+	test('API client handles find_matches correctly (unit test)', async () => {
+		let mockFindMatches = mock(async (_personId: string): Promise<Match[]> => [])
+
+		let mockApiClient = createMockApiClient({
+			findMatches: mockFindMatches,
+		})
+
+		let result = await mockApiClient.findMatches('person-uuid')
+
+		expect(mockFindMatches).toHaveBeenCalledWith('person-uuid')
+		expect(Array.isArray(result)).toBe(true)
+		// Currently returns empty array (placeholder algorithm)
+		expect(result.length).toBe(0)
 	})
 })

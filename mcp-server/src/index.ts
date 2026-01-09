@@ -106,6 +106,17 @@ export function createServer(apiClient: ApiClient) {
 					required: ['id'],
 				},
 			},
+			{
+				name: 'find_matches',
+				description: 'Find compatible matches for a person',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						person_id: { type: 'string', description: 'Person ID (UUID) to find matches for' },
+					},
+					required: ['person_id'],
+				},
+			},
 		],
 	}))
 
@@ -237,6 +248,26 @@ export function createServer(apiClient: ApiClient) {
 					notes?: string
 				}
 				let result = await apiClient.updateIntroduction(id, updates)
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(result, null, 2),
+						},
+					],
+				}
+			}
+
+			if (name === 'find_matches') {
+				if (
+					!args ||
+					typeof args !== 'object' ||
+					!('person_id' in args) ||
+					typeof args.person_id !== 'string'
+				) {
+					throw new Error('Invalid arguments: person_id is required and must be a string')
+				}
+				let result = await apiClient.findMatches(args.person_id)
 				return {
 					content: [
 						{

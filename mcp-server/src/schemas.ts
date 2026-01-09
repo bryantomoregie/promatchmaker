@@ -33,3 +33,22 @@ export const introductionResponseSchema = z
 	.passthrough()
 
 export const introductionsListResponseSchema = z.array(introductionResponseSchema)
+
+// Match schema - currently placeholder, will be expanded when algorithm is implemented
+export const matchResponseSchema = z
+	.object({
+		person: z
+			.object({
+				id: z.string().uuid(),
+				name: z.string(),
+				age: z.number().nullable().optional(),
+				location: z.string().nullable().optional(),
+			})
+			.passthrough()
+			.optional(),
+		compatibility_score: z.number().optional(),
+		match_reasons: z.array(z.string()).optional(),
+	})
+	.passthrough()
+
+export const matchesListResponseSchema = z.array(matchResponseSchema)

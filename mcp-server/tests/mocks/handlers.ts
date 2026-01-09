@@ -184,4 +184,19 @@ export let handlers = [
 			updated_at: new Date().toISOString(),
 		})
 	}),
+
+	// GET /api/matches/:personId - Success
+	http.get(`${BASE_URL}/api/matches/:personId`, ({ request, params }) => {
+		let auth = request.headers.get('Authorization')
+		if (auth !== 'Bearer valid-token') {
+			return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		let { personId } = params
+		if (personId === 'not-found-id') {
+			return HttpResponse.json({ error: 'Person not found' }, { status: 404 })
+		}
+		// Currently returns empty array (placeholder algorithm)
+		// Will return match objects when algorithm is implemented
+		return HttpResponse.json([])
+	}),
 ]
