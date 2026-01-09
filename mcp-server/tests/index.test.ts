@@ -26,6 +26,33 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 				updated_at: new Date().toISOString(),
 			})
 		),
+		updatePerson: mock(
+			async (
+				_id: string,
+				_updates: {
+					name?: string
+					age?: number
+					location?: string
+					gender?: string
+					preferences?: object
+					personality?: object
+					notes?: string
+				}
+			): Promise<Person> => ({
+				id: _id,
+				name: _updates.name ?? 'Alice',
+				matchmaker_id: 'user-id',
+				age: _updates.age ?? 28,
+				location: _updates.location ?? 'New York',
+				gender: _updates.gender ?? null,
+				preferences: _updates.preferences ?? null,
+				personality: _updates.personality ?? null,
+				notes: _updates.notes ?? null,
+				active: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+		),
 		...overrides,
 	} as unknown as ApiClient
 }
@@ -167,5 +194,47 @@ describe('MCP Server', () => {
 		expect(result.name).toBe('Alice')
 		expect(result.age).toBe(28)
 		expect(result.location).toBe('New York')
+	})
+
+	test('API client handles update_person correctly (unit test)', async () => {
+		let mockUpdatePerson = mock(
+			async (
+				_id: string,
+				_updates: {
+					name?: string
+					age?: number
+					location?: string
+				}
+			): Promise<Person> => ({
+				id: _id,
+				name: _updates.name ?? 'Alice',
+				matchmaker_id: 'user-id',
+				age: _updates.age ?? 28,
+				location: _updates.location ?? 'New York',
+				active: true,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+		)
+
+		let mockApiClient = createMockApiClient({
+			updatePerson: mockUpdatePerson,
+		})
+
+		let result = await mockApiClient.updatePerson('test-person-id', {
+			name: 'Bob',
+			age: 35,
+			location: 'Chicago',
+		})
+
+		expect(mockUpdatePerson).toHaveBeenCalledWith('test-person-id', {
+			name: 'Bob',
+			age: 35,
+			location: 'Chicago',
+		})
+		expect(result.id).toBe('test-person-id')
+		expect(result.name).toBe('Bob')
+		expect(result.age).toBe(35)
+		expect(result.location).toBe('Chicago')
 	})
 })

@@ -91,4 +91,46 @@ describe('ApiClient', () => {
 		let client = new ApiClient(config)
 		await expect(client.getPerson('not-found-id')).rejects.toThrow('HTTP 404')
 	})
+
+	test('updatePerson(id, updates) makes PUT with Bearer token', async () => {
+		let client = new ApiClient(config)
+		let result = await client.updatePerson('550e8400-e29b-41d4-a716-446655440000', {
+			name: 'Bob',
+			age: 30,
+			location: 'Los Angeles',
+		})
+
+		expect(result.id).toBe('550e8400-e29b-41d4-a716-446655440000')
+		expect(result.name).toBe('Bob')
+		expect(result.age).toBe(30)
+		expect(result.location).toBe('Los Angeles')
+	})
+
+	test('updatePerson(id, updates) validates id is not empty', async () => {
+		let client = new ApiClient(config)
+		await expect(client.updatePerson('', { name: 'Bob' })).rejects.toThrow('ID is required')
+	})
+
+	test('updatePerson(id, updates) throws on 401 unauthorized', async () => {
+		let invalidClient = new ApiClient({
+			...config,
+			auth_token: 'invalid-token',
+		})
+		await expect(invalidClient.updatePerson('test-id', { name: 'Bob' })).rejects.toThrow()
+	})
+
+	test('updatePerson(id, updates) throws on 404 not found', async () => {
+		let client = new ApiClient(config)
+		await expect(client.updatePerson('not-found-id', { name: 'Bob' })).rejects.toThrow('HTTP 404')
+	})
+
+	test('updatePerson(id, updates) can update individual fields', async () => {
+		let client = new ApiClient(config)
+		let result = await client.updatePerson('550e8400-e29b-41d4-a716-446655440000', {
+			notes: 'Updated notes',
+		})
+
+		expect(result.id).toBe('550e8400-e29b-41d4-a716-446655440000')
+		expect(result.notes).toBe('Updated notes')
+	})
 })

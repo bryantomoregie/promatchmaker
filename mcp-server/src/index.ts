@@ -50,6 +50,24 @@ export function createServer(apiClient: ApiClient) {
 					required: ['id'],
 				},
 			},
+			{
+				name: 'update_person',
+				description: "Update a person's profile information",
+				inputSchema: {
+					type: 'object',
+					properties: {
+						id: { type: 'string', description: 'Person ID (UUID)' },
+						name: { type: 'string', description: 'Person name' },
+						age: { type: 'number', description: 'Person age' },
+						location: { type: 'string', description: 'Person location' },
+						gender: { type: 'string', description: 'Person gender' },
+						preferences: { type: 'object', description: 'Person preferences' },
+						personality: { type: 'object', description: 'Person personality traits' },
+						notes: { type: 'string', description: 'Notes about the person' },
+					},
+					required: ['id'],
+				},
+			},
 		],
 	}))
 
@@ -95,6 +113,31 @@ export function createServer(apiClient: ApiClient) {
 					throw new Error('Invalid arguments: id is required and must be a string')
 				}
 				let result = await apiClient.getPerson(args.id)
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(result, null, 2),
+						},
+					],
+				}
+			}
+
+			if (name === 'update_person') {
+				if (!args || typeof args !== 'object' || !('id' in args) || typeof args.id !== 'string') {
+					throw new Error('Invalid arguments: id is required and must be a string')
+				}
+				let { id, ...updates } = args as {
+					id: string
+					name?: string
+					age?: number
+					location?: string
+					gender?: string
+					preferences?: object
+					personality?: object
+					notes?: string
+				}
+				let result = await apiClient.updatePerson(id, updates)
 				return {
 					content: [
 						{

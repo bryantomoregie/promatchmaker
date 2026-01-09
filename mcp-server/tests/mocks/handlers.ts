@@ -78,4 +78,31 @@ export let handlers = [
 			updated_at: new Date().toISOString(),
 		})
 	}),
+
+	// PUT /api/people/:id - Success
+	http.put(`${BASE_URL}/api/people/:id`, async ({ request, params }) => {
+		let auth = request.headers.get('Authorization')
+		if (auth !== 'Bearer valid-token') {
+			return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		let { id } = params
+		if (id === 'not-found-id') {
+			return HttpResponse.json({ error: 'Person not found' }, { status: 404 })
+		}
+		let body = (await request.json()) as Record<string, unknown>
+		return HttpResponse.json({
+			id: id,
+			name: body.name ?? 'Alice',
+			matchmaker_id: '123e4567-e89b-12d3-a456-426614174000',
+			age: body.age ?? 28,
+			location: body.location ?? 'New York',
+			gender: body.gender ?? 'female',
+			preferences: body.preferences ?? { ageRange: [25, 35] },
+			personality: body.personality ?? { introvert: false },
+			notes: body.notes ?? 'Looking for someone creative',
+			active: true,
+			created_at: '2026-01-08T00:00:00.000Z',
+			updated_at: new Date().toISOString(),
+		})
+	}),
 ]
