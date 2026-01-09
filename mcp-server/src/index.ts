@@ -89,6 +89,23 @@ export function createServer(apiClient: ApiClient) {
 					properties: {},
 				},
 			},
+			{
+				name: 'update_introduction',
+				description: 'Update introduction status or notes',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						id: { type: 'string', description: 'Introduction ID (UUID)' },
+						status: {
+							type: 'string',
+							enum: ['pending', 'accepted', 'declined', 'dating', 'ended'],
+							description: 'Introduction status',
+						},
+						notes: { type: 'string', description: 'Notes about the introduction' },
+					},
+					required: ['id'],
+				},
+			},
 		],
 	}))
 
@@ -200,6 +217,26 @@ export function createServer(apiClient: ApiClient) {
 
 			if (name === 'list_introductions') {
 				let result = await apiClient.listIntroductions()
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(result, null, 2),
+						},
+					],
+				}
+			}
+
+			if (name === 'update_introduction') {
+				if (!args || typeof args !== 'object' || !('id' in args) || typeof args.id !== 'string') {
+					throw new Error('Invalid arguments: id is required and must be a string')
+				}
+				let { id, ...updates } = args as {
+					id: string
+					status?: 'pending' | 'accepted' | 'declined' | 'dating' | 'ended'
+					notes?: string
+				}
+				let result = await apiClient.updateIntroduction(id, updates)
 				return {
 					content: [
 						{

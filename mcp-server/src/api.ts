@@ -32,6 +32,12 @@ let createIntroductionInputSchema = z.object({
 	notes: z.string().optional(),
 })
 
+let updateIntroductionInputSchema = z.object({
+	id: z.string().min(1, 'ID is required'),
+	status: z.enum(['pending', 'accepted', 'declined', 'dating', 'ended']).optional(),
+	notes: z.string().optional(),
+})
+
 export interface Person {
 	id: string
 	name: string
@@ -208,5 +214,31 @@ export class ApiClient {
 		}
 
 		return this.parseResponse(response, introductionsListResponseSchema)
+	}
+
+	async updateIntroduction(
+		id: string,
+		updates: {
+			status?: 'pending' | 'accepted' | 'declined' | 'dating' | 'ended'
+			notes?: string
+		}
+	): Promise<Introduction> {
+		// Validate input
+		updateIntroductionInputSchema.parse({ id, ...updates })
+
+		let response = await fetch(`${this.config.api_base_url}/api/introductions/${id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${this.config.auth_token}`,
+			},
+			body: JSON.stringify(updates),
+		})
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+		}
+
+		return this.parseResponse(response, introductionResponseSchema)
 	}
 }

@@ -222,4 +222,60 @@ describe('ApiClient', () => {
 		})
 		await expect(invalidClient.listIntroductions()).rejects.toThrow()
 	})
+
+	test('updateIntroduction(id, updates) makes PUT with Bearer token', async () => {
+		let client = new ApiClient(config)
+		let result = await client.updateIntroduction('770e8400-e29b-41d4-a716-446655440000', {
+			status: 'accepted',
+			notes: 'They went on a first date',
+		})
+
+		expect(result.id).toBe('770e8400-e29b-41d4-a716-446655440000')
+		expect(result.status).toBe('accepted')
+		expect(result.notes).toBe('They went on a first date')
+		expect(result.matchmaker_id).toBe('123e4567-e89b-12d3-a456-426614174000')
+	})
+
+	test('updateIntroduction(id, updates) validates id is not empty', async () => {
+		let client = new ApiClient(config)
+		await expect(client.updateIntroduction('', { status: 'accepted' })).rejects.toThrow(
+			'ID is required'
+		)
+	})
+
+	test('updateIntroduction(id, updates) validates status enum', async () => {
+		let client = new ApiClient(config)
+		await expect(
+			client.updateIntroduction('770e8400-e29b-41d4-a716-446655440000', {
+				status: 'invalid-status' as 'pending',
+			})
+		).rejects.toThrow()
+	})
+
+	test('updateIntroduction(id, updates) throws on 401 unauthorized', async () => {
+		let invalidClient = new ApiClient({
+			...config,
+			auth_token: 'invalid-token',
+		})
+		await expect(
+			invalidClient.updateIntroduction('test-id', { status: 'accepted' })
+		).rejects.toThrow()
+	})
+
+	test('updateIntroduction(id, updates) throws on 404 not found', async () => {
+		let client = new ApiClient(config)
+		await expect(client.updateIntroduction('not-found-id', { status: 'accepted' })).rejects.toThrow(
+			'HTTP 404'
+		)
+	})
+
+	test('updateIntroduction(id, updates) can update individual fields', async () => {
+		let client = new ApiClient(config)
+		let result = await client.updateIntroduction('770e8400-e29b-41d4-a716-446655440000', {
+			notes: 'Updated notes only',
+		})
+
+		expect(result.id).toBe('770e8400-e29b-41d4-a716-446655440000')
+		expect(result.notes).toBe('Updated notes only')
+	})
 })

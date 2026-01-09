@@ -70,6 +70,24 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 			})
 		),
 		listIntroductions: mock(async (): Promise<Introduction[]> => []),
+		updateIntroduction: mock(
+			async (
+				_id: string,
+				_updates: {
+					status?: 'pending' | 'accepted' | 'declined' | 'dating' | 'ended'
+					notes?: string
+				}
+			): Promise<Introduction> => ({
+				id: _id,
+				matchmaker_id: 'user-id',
+				person_a_id: 'person-a-uuid',
+				person_b_id: 'person-b-uuid',
+				status: _updates.status ?? 'pending',
+				notes: _updates.notes ?? null,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+		),
 		...overrides,
 	} as unknown as ApiClient
 }
@@ -342,5 +360,43 @@ describe('MCP Server', () => {
 		expect(secondIntro?.id).toBe('intro-2')
 		expect(secondIntro?.status).toBe('accepted')
 		expect(secondIntro?.notes).toBeNull()
+	})
+
+	test('API client handles update_introduction correctly (unit test)', async () => {
+		let mockUpdateIntroduction = mock(
+			async (
+				_id: string,
+				_updates: {
+					status?: 'pending' | 'accepted' | 'declined' | 'dating' | 'ended'
+					notes?: string
+				}
+			): Promise<Introduction> => ({
+				id: _id,
+				matchmaker_id: 'user-id',
+				person_a_id: 'person-a-uuid',
+				person_b_id: 'person-b-uuid',
+				status: _updates.status ?? 'pending',
+				notes: _updates.notes ?? null,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+		)
+
+		let mockApiClient = createMockApiClient({
+			updateIntroduction: mockUpdateIntroduction,
+		})
+
+		let result = await mockApiClient.updateIntroduction('intro-uuid', {
+			status: 'dating',
+			notes: 'They are now dating!',
+		})
+
+		expect(mockUpdateIntroduction).toHaveBeenCalledWith('intro-uuid', {
+			status: 'dating',
+			notes: 'They are now dating!',
+		})
+		expect(result.id).toBe('intro-uuid')
+		expect(result.status).toBe('dating')
+		expect(result.notes).toBe('They are now dating!')
 	})
 })

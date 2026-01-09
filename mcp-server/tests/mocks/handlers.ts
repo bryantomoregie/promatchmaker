@@ -161,4 +161,27 @@ export let handlers = [
 			},
 		])
 	}),
+
+	// PUT /api/introductions/:id - Success
+	http.put(`${BASE_URL}/api/introductions/:id`, async ({ request, params }) => {
+		let auth = request.headers.get('Authorization')
+		if (auth !== 'Bearer valid-token') {
+			return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		let { id } = params
+		if (id === 'not-found-id') {
+			return HttpResponse.json({ error: 'Introduction not found' }, { status: 404 })
+		}
+		let body = (await request.json()) as Record<string, unknown>
+		return HttpResponse.json({
+			id: id,
+			matchmaker_id: '123e4567-e89b-12d3-a456-426614174000',
+			person_a_id: '550e8400-e29b-41d4-a716-446655440001',
+			person_b_id: '550e8400-e29b-41d4-a716-446655440002',
+			status: body.status ?? 'pending',
+			notes: body.notes ?? 'Both enjoy hiking',
+			created_at: '2026-01-08T00:00:00.000Z',
+			updated_at: new Date().toISOString(),
+		})
+	}),
 ]
