@@ -89,6 +89,18 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 			})
 		),
 		findMatches: mock(async (_personId: string): Promise<Match[]> => []),
+		deletePerson: mock(
+			async (_id: string): Promise<Person> => ({
+				id: _id,
+				name: 'Alice',
+				matchmaker_id: 'user-id',
+				age: 28,
+				location: 'New York',
+				active: false,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+		),
 		...overrides,
 	} as unknown as ApiClient
 }
@@ -414,5 +426,31 @@ describe('MCP Server', () => {
 		expect(Array.isArray(result)).toBe(true)
 		// Currently returns empty array (placeholder algorithm)
 		expect(result.length).toBe(0)
+	})
+
+	test('API client handles delete_person correctly (unit test)', async () => {
+		let mockDeletePerson = mock(
+			async (_id: string): Promise<Person> => ({
+				id: _id,
+				name: 'Alice',
+				matchmaker_id: 'user-id',
+				age: 28,
+				location: 'New York',
+				active: false,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			})
+		)
+
+		let mockApiClient = createMockApiClient({
+			deletePerson: mockDeletePerson,
+		})
+
+		let result = await mockApiClient.deletePerson('person-uuid')
+
+		expect(mockDeletePerson).toHaveBeenCalledWith('person-uuid')
+		expect(result.id).toBe('person-uuid')
+		expect(result.name).toBe('Alice')
+		expect(result.active).toBe(false)
 	})
 })

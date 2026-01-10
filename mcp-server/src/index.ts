@@ -117,6 +117,17 @@ export function createServer(apiClient: ApiClient) {
 					required: ['person_id'],
 				},
 			},
+			{
+				name: 'delete_person',
+				description: 'Soft-delete a person (sets active=false)',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						id: { type: 'string', description: 'Person ID (UUID)' },
+					},
+					required: ['id'],
+				},
+			},
 		],
 	}))
 
@@ -268,6 +279,21 @@ export function createServer(apiClient: ApiClient) {
 					throw new Error('Invalid arguments: person_id is required and must be a string')
 				}
 				let result = await apiClient.findMatches(args.person_id)
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(result, null, 2),
+						},
+					],
+				}
+			}
+
+			if (name === 'delete_person') {
+				if (!args || typeof args !== 'object' || !('id' in args) || typeof args.id !== 'string') {
+					throw new Error('Invalid arguments: id is required and must be a string')
+				}
+				let result = await apiClient.deletePerson(args.id)
 				return {
 					content: [
 						{

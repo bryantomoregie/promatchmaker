@@ -162,6 +162,28 @@ export let handlers = [
 		])
 	}),
 
+	// GET /api/introductions/:id - Success
+	http.get(`${BASE_URL}/api/introductions/:id`, ({ request, params }) => {
+		let auth = request.headers.get('Authorization')
+		if (auth !== 'Bearer valid-token') {
+			return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		let { id } = params
+		if (id === 'not-found-id') {
+			return HttpResponse.json({ error: 'Introduction not found' }, { status: 404 })
+		}
+		return HttpResponse.json({
+			id: id,
+			matchmaker_id: '123e4567-e89b-12d3-a456-426614174000',
+			person_a_id: '550e8400-e29b-41d4-a716-446655440001',
+			person_b_id: '550e8400-e29b-41d4-a716-446655440002',
+			status: 'pending',
+			notes: 'Both enjoy hiking',
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
+		})
+	}),
+
 	// PUT /api/introductions/:id - Success
 	http.put(`${BASE_URL}/api/introductions/:id`, async ({ request, params }) => {
 		let auth = request.headers.get('Authorization')
@@ -198,5 +220,32 @@ export let handlers = [
 		// Currently returns empty array (placeholder algorithm)
 		// Will return match objects when algorithm is implemented
 		return HttpResponse.json([])
+	}),
+
+	// DELETE /api/people/:id - Success (soft delete)
+	http.delete(`${BASE_URL}/api/people/:id`, ({ request, params }) => {
+		let auth = request.headers.get('Authorization')
+		if (auth !== 'Bearer valid-token') {
+			return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		let { id } = params
+		if (id === 'not-found-id') {
+			return HttpResponse.json({ error: 'Person not found' }, { status: 404 })
+		}
+		// Soft delete returns the person with active=false
+		return HttpResponse.json({
+			id: id,
+			name: 'Alice',
+			matchmaker_id: '123e4567-e89b-12d3-a456-426614174000',
+			age: 28,
+			location: 'New York',
+			gender: 'female',
+			preferences: { ageRange: [25, 35] },
+			personality: { introvert: false },
+			notes: 'Looking for someone creative',
+			active: false,
+			created_at: '2026-01-08T00:00:00.000Z',
+			updated_at: new Date().toISOString(),
+		})
 	}),
 ]

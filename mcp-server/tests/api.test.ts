@@ -305,4 +305,31 @@ describe('ApiClient', () => {
 		let client = new ApiClient(config)
 		await expect(client.findMatches('not-found-id')).rejects.toThrow('HTTP 404')
 	})
+
+	test('deletePerson(id) makes DELETE with Bearer token', async () => {
+		let client = new ApiClient(config)
+		let result = await client.deletePerson('550e8400-e29b-41d4-a716-446655440000')
+
+		expect(result.id).toBe('550e8400-e29b-41d4-a716-446655440000')
+		expect(result.active).toBe(false)
+		expect(result.name).toBe('Alice')
+	})
+
+	test('deletePerson(id) validates id is not empty', async () => {
+		let client = new ApiClient(config)
+		await expect(client.deletePerson('')).rejects.toThrow('ID is required')
+	})
+
+	test('deletePerson(id) throws on 401 unauthorized', async () => {
+		let invalidClient = new ApiClient({
+			...config,
+			auth_token: 'invalid-token',
+		})
+		await expect(invalidClient.deletePerson('test-id')).rejects.toThrow()
+	})
+
+	test('deletePerson(id) throws on 404 not found', async () => {
+		let client = new ApiClient(config)
+		await expect(client.deletePerson('not-found-id')).rejects.toThrow('HTTP 404')
+	})
 })

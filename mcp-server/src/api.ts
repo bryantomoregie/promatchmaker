@@ -43,6 +43,10 @@ let findMatchesInputSchema = z.object({
 	person_id: z.string().min(1, 'Person ID is required'),
 })
 
+let deletePersonInputSchema = z.object({
+	id: z.string().min(1, 'ID is required'),
+})
+
 export interface Person {
 	id: string
 	name: string
@@ -274,5 +278,23 @@ export class ApiClient {
 		}
 
 		return this.parseResponse(response, matchesListResponseSchema)
+	}
+
+	async deletePerson(id: string): Promise<Person> {
+		// Validate input
+		deletePersonInputSchema.parse({ id })
+
+		let response = await fetch(`${this.config.api_base_url}/api/people/${id}`, {
+			method: 'DELETE',
+			headers: {
+				Authorization: `Bearer ${this.config.auth_token}`,
+			},
+		})
+
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+		}
+
+		return this.parseResponse(response, personResponseSchema)
 	}
 }
