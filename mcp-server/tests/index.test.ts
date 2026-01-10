@@ -1,5 +1,5 @@
 import { describe, test, expect, mock } from 'bun:test'
-import type { ApiClient, Person, Introduction, Match } from '../src/api'
+import type { ApiClient, Person, Introduction, Match, Feedback } from '../src/api'
 
 function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 	return {
@@ -111,6 +111,21 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 				notes: 'Both enjoy hiking',
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString(),
+			})
+		),
+		submitFeedback: mock(
+			async (
+				_introduction_id: string,
+				_from_person_id: string,
+				_content: string,
+				_sentiment?: string
+			): Promise<Feedback> => ({
+				id: 'feedback-id',
+				introduction_id: _introduction_id,
+				from_person_id: _from_person_id,
+				content: _content,
+				sentiment: _sentiment ?? null,
+				created_at: new Date().toISOString(),
 			})
 		),
 		...overrides,
@@ -493,5 +508,46 @@ describe('MCP Server', () => {
 		expect(result.person_b_id).toBe('person-b-uuid')
 		expect(result.status).toBe('pending')
 		expect(result.notes).toBe('Both enjoy hiking')
+	})
+
+	test('API client handles submit_feedback correctly (unit test)', async () => {
+		let mockSubmitFeedback = mock(
+			async (
+				_introduction_id: string,
+				_from_person_id: string,
+				_content: string,
+				_sentiment?: string
+			): Promise<Feedback> => ({
+				id: 'feedback-id',
+				introduction_id: _introduction_id,
+				from_person_id: _from_person_id,
+				content: _content,
+				sentiment: _sentiment ?? null,
+				created_at: new Date().toISOString(),
+			})
+		)
+
+		let mockApiClient = createMockApiClient({
+			submitFeedback: mockSubmitFeedback,
+		})
+
+		let result = await mockApiClient.submitFeedback(
+			'intro-uuid',
+			'person-uuid',
+			'Great match! We had a wonderful time.',
+			'positive'
+		)
+
+		expect(mockSubmitFeedback).toHaveBeenCalledWith(
+			'intro-uuid',
+			'person-uuid',
+			'Great match! We had a wonderful time.',
+			'positive'
+		)
+		expect(result.id).toBe('feedback-id')
+		expect(result.introduction_id).toBe('intro-uuid')
+		expect(result.from_person_id).toBe('person-uuid')
+		expect(result.content).toBe('Great match! We had a wonderful time.')
+		expect(result.sentiment).toBe('positive')
 	})
 })

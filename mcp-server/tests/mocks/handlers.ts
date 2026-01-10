@@ -248,4 +248,29 @@ export let handlers = [
 			updated_at: new Date().toISOString(),
 		})
 	}),
+
+	// POST /api/feedback - Success
+	http.post(`${BASE_URL}/api/feedback`, async ({ request }) => {
+		let auth = request.headers.get('Authorization')
+		if (auth !== 'Bearer valid-token') {
+			return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+		}
+		let body = (await request.json()) as {
+			introduction_id: string
+			from_person_id: string
+			content: string
+			sentiment?: string
+		}
+		return HttpResponse.json(
+			{
+				id: '880e8400-e29b-41d4-a716-446655440000',
+				introduction_id: body.introduction_id,
+				from_person_id: body.from_person_id,
+				content: body.content,
+				sentiment: body.sentiment ?? null,
+				created_at: new Date().toISOString(),
+			},
+			{ status: 201 }
+		)
+	}),
 ]

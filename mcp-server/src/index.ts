@@ -139,6 +139,26 @@ export function createServer(apiClient: ApiClient) {
 					required: ['id'],
 				},
 			},
+			{
+				name: 'submit_feedback',
+				description: 'Submit feedback about an introduction',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						introduction_id: { type: 'string', description: 'Introduction ID (UUID)' },
+						from_person_id: {
+							type: 'string',
+							description: 'Person ID (UUID) submitting the feedback',
+						},
+						content: { type: 'string', description: 'Feedback content' },
+						sentiment: {
+							type: 'string',
+							description: 'Feedback sentiment (e.g., positive, negative, neutral)',
+						},
+					},
+					required: ['introduction_id', 'from_person_id', 'content'],
+				},
+			},
 		],
 	}))
 
@@ -320,6 +340,43 @@ export function createServer(apiClient: ApiClient) {
 					throw new Error('Invalid arguments: id is required and must be a string')
 				}
 				let result = await apiClient.getIntroduction(args.id)
+				return {
+					content: [
+						{
+							type: 'text',
+							text: JSON.stringify(result, null, 2),
+						},
+					],
+				}
+			}
+
+			if (name === 'submit_feedback') {
+				if (
+					!args ||
+					typeof args !== 'object' ||
+					!('introduction_id' in args) ||
+					typeof args.introduction_id !== 'string' ||
+					!('from_person_id' in args) ||
+					typeof args.from_person_id !== 'string' ||
+					!('content' in args) ||
+					typeof args.content !== 'string'
+				) {
+					throw new Error(
+						'Invalid arguments: introduction_id, from_person_id, and content are required and must be strings'
+					)
+				}
+				let { introduction_id, from_person_id, content, sentiment } = args as {
+					introduction_id: string
+					from_person_id: string
+					content: string
+					sentiment?: string
+				}
+				let result = await apiClient.submitFeedback(
+					introduction_id,
+					from_person_id,
+					content,
+					sentiment
+				)
 				return {
 					content: [
 						{

@@ -362,4 +362,70 @@ describe('ApiClient', () => {
 		let client = new ApiClient(config)
 		await expect(client.getIntroduction('not-found-id')).rejects.toThrow('HTTP 404')
 	})
+
+	test('submitFeedback() makes POST with Bearer token', async () => {
+		let client = new ApiClient(config)
+		let result = await client.submitFeedback(
+			'770e8400-e29b-41d4-a716-446655440000',
+			'550e8400-e29b-41d4-a716-446655440001',
+			'Great match! We had a wonderful time.'
+		)
+
+		expect(result.id).toBe('880e8400-e29b-41d4-a716-446655440000')
+		expect(result.introduction_id).toBe('770e8400-e29b-41d4-a716-446655440000')
+		expect(result.from_person_id).toBe('550e8400-e29b-41d4-a716-446655440001')
+		expect(result.content).toBe('Great match! We had a wonderful time.')
+		expect(result.sentiment).toBeNull()
+	})
+
+	test('submitFeedback() includes sentiment when provided', async () => {
+		let client = new ApiClient(config)
+		let result = await client.submitFeedback(
+			'770e8400-e29b-41d4-a716-446655440000',
+			'550e8400-e29b-41d4-a716-446655440001',
+			'Great match!',
+			'positive'
+		)
+
+		expect(result.sentiment).toBe('positive')
+	})
+
+	test('submitFeedback() validates introduction_id is a valid UUID', async () => {
+		let client = new ApiClient(config)
+		await expect(
+			client.submitFeedback('invalid-uuid', '550e8400-e29b-41d4-a716-446655440001', 'Great match!')
+		).rejects.toThrow('introduction_id must be a valid UUID')
+	})
+
+	test('submitFeedback() validates from_person_id is a valid UUID', async () => {
+		let client = new ApiClient(config)
+		await expect(
+			client.submitFeedback('770e8400-e29b-41d4-a716-446655440000', 'invalid-uuid', 'Great match!')
+		).rejects.toThrow('from_person_id must be a valid UUID')
+	})
+
+	test('submitFeedback() validates content is not empty', async () => {
+		let client = new ApiClient(config)
+		await expect(
+			client.submitFeedback(
+				'770e8400-e29b-41d4-a716-446655440000',
+				'550e8400-e29b-41d4-a716-446655440001',
+				''
+			)
+		).rejects.toThrow('Content is required')
+	})
+
+	test('submitFeedback() throws on 401 unauthorized', async () => {
+		let invalidClient = new ApiClient({
+			...config,
+			auth_token: 'invalid-token',
+		})
+		await expect(
+			invalidClient.submitFeedback(
+				'770e8400-e29b-41d4-a716-446655440000',
+				'550e8400-e29b-41d4-a716-446655440001',
+				'Great match!'
+			)
+		).rejects.toThrow()
+	})
 })
