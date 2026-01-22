@@ -7,6 +7,7 @@ import { createPeopleRoutes } from './routes/people'
 import { createIntroductionsRoutes } from './routes/introductions'
 import { createFeedbackRoutes } from './routes/feedback'
 import { createMatchesRoutes } from './routes/matches'
+import { createOAuthRoutes } from './routes/oauth'
 
 let app = new Hono()
 
@@ -22,6 +23,9 @@ app.get('/', c => {
 app.get('/health', c => {
 	return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
 })
+
+// OAuth routes (public, no authentication required)
+app.route('/oauth', createOAuthRoutes())
 
 // Initialize Supabase client and protected routes only if env vars are set
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
