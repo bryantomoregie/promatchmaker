@@ -1,8 +1,52 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui";
 import { cn } from "@/lib/utils";
+
+type ConnectionStatus = "checking" | "connected" | "disconnected";
+
+function ConnectionIndicator({
+	status,
+	onRetry,
+}: {
+	status: ConnectionStatus;
+	onRetry: () => void;
+}) {
+	return (
+		<div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+			<div
+				className={cn(
+					"h-3 w-3 rounded-full",
+					status === "checking" && "animate-pulse bg-amber-500",
+					status === "connected" && "bg-green-500",
+					status === "disconnected" && "bg-red-500"
+				)}
+				aria-hidden="true"
+			/>
+			<div className="flex-1">
+				<p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+					{status === "checking" && "Checking connection..."}
+					{status === "connected" && "MCP server is reachable"}
+					{status === "disconnected" && "Unable to reach MCP server"}
+				</p>
+				{status === "disconnected" && (
+					<p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+						The server may be starting up or unavailable
+					</p>
+				)}
+			</div>
+			{status === "disconnected" && (
+				<button
+					onClick={onRetry}
+					className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+				>
+					Retry
+				</button>
+			)}
+		</div>
+	);
+}
 
 function CopyIcon({ className }: { className?: string }) {
 	return (
@@ -39,11 +83,41 @@ function CheckIcon({ className }: { className?: string }) {
 
 export default function SetupPage() {
 	let [copied, setCopied] = useState(false);
+	let [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("checking");
 
 	let mcpEndpoint =
 		typeof window !== "undefined"
 			? `${window.location.protocol}//${window.location.host}/mcp`
 			: "https://your-server-url.com/mcp";
+
+	let healthEndpoint =
+		typeof window !== "undefined"
+			? `${window.location.protocol}//${window.location.host}/health`
+			: "https://your-server-url.com/health";
+
+	let checkConnection = useCallback(async () => {
+		setConnectionStatus("checking");
+		try {
+			let response = await fetch(healthEndpoint, {
+				method: "GET",
+				headers: { Accept: "application/json" },
+			});
+			if (response.ok) {
+				let data = await response.json();
+				if (data.status === "healthy") {
+					setConnectionStatus("connected");
+					return;
+				}
+			}
+			setConnectionStatus("disconnected");
+		} catch {
+			setConnectionStatus("disconnected");
+		}
+	}, [healthEndpoint]);
+
+	useEffect(() => {
+		checkConnection();
+	}, [checkConnection]);
 
 	async function handleCopy() {
 		try {
@@ -139,6 +213,14 @@ export default function SetupPage() {
 										Copied to clipboard!
 									</p>
 								)}
+							</section>
+
+							{/* Connection Status */}
+							<section>
+								<h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+									Connection Status
+								</h2>
+								<ConnectionIndicator status={connectionStatus} onRetry={checkConnection} />
 							</section>
 
 							{/* Setup Instructions */}
@@ -279,8 +361,8 @@ export default function SetupPage() {
 									</li>
 								</ol>
 								<p className="mt-4 text-sm text-gray-500 dark:text-gray-500">
-									Your access token is securely stored and will be used for all future requests.
-									You can revoke access at any time from your account settings.
+									Your access token is securely stored and will be used for all future requests. You
+									can revoke access at any time from your account settings.
 								</p>
 							</section>
 
