@@ -1,0 +1,223 @@
+"use client";
+
+import { useState } from "react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui";
+import { cn } from "@/lib/utils";
+
+function CopyIcon({ className }: { className?: string }) {
+	return (
+		<svg
+			className={className}
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+			/>
+		</svg>
+	);
+}
+
+function CheckIcon({ className }: { className?: string }) {
+	return (
+		<svg
+			className={className}
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+			xmlns="http://www.w3.org/2000/svg"
+		>
+			<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+		</svg>
+	);
+}
+
+export default function SetupPage() {
+	let [copied, setCopied] = useState(false);
+
+	let serverUrl =
+		typeof window !== "undefined"
+			? `${window.location.protocol}//${window.location.host}`
+			: "https://your-server-url.com";
+
+	async function handleCopy() {
+		try {
+			await navigator.clipboard.writeText(serverUrl);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+		} catch {
+			// Fallback for browsers that don't support clipboard API
+			let textArea = document.createElement("textarea");
+			textArea.value = serverUrl;
+			document.body.appendChild(textArea);
+			textArea.select();
+			document.execCommand("copy");
+			document.body.removeChild(textArea);
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2000);
+		}
+	}
+
+	return (
+		<main className="flex min-h-screen flex-col bg-gray-50 dark:bg-gray-900">
+			<div className="container mx-auto flex flex-1 flex-col items-center justify-center px-4 py-12">
+				<div className="w-full max-w-2xl">
+					<Card variant="elevated">
+						<CardHeader className="text-center">
+							<div className="mb-4 inline-flex items-center justify-center rounded-full bg-sky-100 p-3 dark:bg-sky-900/30">
+								<svg
+									className="h-8 w-8 text-sky-600 dark:text-sky-400"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+									/>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+									/>
+								</svg>
+							</div>
+							<CardTitle as="h1" className="text-3xl">
+								MCP Setup
+							</CardTitle>
+							<CardDescription className="mt-2 text-base">
+								Connect your AI assistant to The Introduction using the Model Context Protocol
+								(MCP).
+							</CardDescription>
+						</CardHeader>
+
+						<CardContent className="space-y-8">
+							{/* What is MCP */}
+							<section>
+								<h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+									What is MCP?
+								</h2>
+								<p className="text-gray-600 dark:text-gray-400">
+									The Model Context Protocol (MCP) allows AI assistants like Claude to securely
+									connect to external tools and services. By setting up MCP, your AI assistant can
+									help you manage your matchmaking notes and suggestions.
+								</p>
+							</section>
+
+							{/* Server URL */}
+							<section>
+								<h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">
+									Server URL
+								</h2>
+								<div className="flex items-center gap-2">
+									<code className="flex-1 rounded-md border border-gray-200 bg-gray-100 px-4 py-3 font-mono text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+										{serverUrl}
+									</code>
+									<button
+										onClick={handleCopy}
+										className={cn(
+											"inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md border transition-all duration-200",
+											copied
+												? "border-green-500 bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+												: "border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:text-sky-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-sky-400"
+										)}
+										aria-label={copied ? "Copied!" : "Copy server URL"}
+									>
+										{copied ? <CheckIcon className="h-5 w-5" /> : <CopyIcon className="h-5 w-5" />}
+									</button>
+								</div>
+								{copied && (
+									<p className="mt-2 text-sm text-green-600 dark:text-green-400">
+										Copied to clipboard!
+									</p>
+								)}
+							</section>
+
+							{/* Setup Instructions */}
+							<section>
+								<h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+									Setup Instructions
+								</h2>
+								<ol className="space-y-4">
+									<li className="flex gap-4">
+										<span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+											1
+										</span>
+										<div>
+											<p className="font-medium text-gray-900 dark:text-gray-100">
+												Open your MCP client settings
+											</p>
+											<p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+												In Claude Desktop, go to Settings → Developer → MCP Servers
+											</p>
+										</div>
+									</li>
+									<li className="flex gap-4">
+										<span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+											2
+										</span>
+										<div>
+											<p className="font-medium text-gray-900 dark:text-gray-100">
+												Add a new MCP server
+											</p>
+											<p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+												Click "Add Server" and enter a name like "The Introduction"
+											</p>
+										</div>
+									</li>
+									<li className="flex gap-4">
+										<span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+											3
+										</span>
+										<div>
+											<p className="font-medium text-gray-900 dark:text-gray-100">
+												Paste the server URL
+											</p>
+											<p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+												Copy the URL above and paste it into the server URL field
+											</p>
+										</div>
+									</li>
+									<li className="flex gap-4">
+										<span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+											4
+										</span>
+										<div>
+											<p className="font-medium text-gray-900 dark:text-gray-100">
+												Complete authentication
+											</p>
+											<p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+												Follow the OAuth prompts to authorize your AI assistant
+											</p>
+										</div>
+									</li>
+									<li className="flex gap-4">
+										<span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+											5
+										</span>
+										<div>
+											<p className="font-medium text-gray-900 dark:text-gray-100">
+												Start matchmaking!
+											</p>
+											<p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+												Once connected, ask your AI assistant to help manage your introductions
+											</p>
+										</div>
+									</li>
+								</ol>
+							</section>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
+		</main>
+	);
+}
