@@ -10,6 +10,7 @@ import { createMatchesRoutes } from './routes/matches'
 import { createOAuthRoutes } from './routes/oauth'
 import { createLoginRoutes } from './routes/login'
 import { createWellKnownRoutes } from './routes/well-known'
+import { createRegisterRoutes } from './routes/register'
 
 let app = new Hono()
 
@@ -28,6 +29,9 @@ app.get('/health', c => {
 
 // Well-known routes (public, for OAuth discovery)
 app.route('/.well-known', createWellKnownRoutes())
+
+// Dynamic client registration (public, per RFC 7591)
+app.route('/register', createRegisterRoutes())
 
 // OAuth routes (public, no authentication required)
 // Note: OAuth routes will be mounted with Supabase client below if available
