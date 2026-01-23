@@ -9,6 +9,7 @@ import { createFeedbackRoutes } from './routes/feedback'
 import { createMatchesRoutes } from './routes/matches'
 import { createOAuthRoutes } from './routes/oauth'
 import { createLoginRoutes } from './routes/login'
+import { createWellKnownRoutes } from './routes/well-known'
 
 let app = new Hono()
 
@@ -24,6 +25,9 @@ app.get('/', c => {
 app.get('/health', c => {
 	return c.json({ status: 'healthy', timestamp: new Date().toISOString() })
 })
+
+// Well-known routes (public, for OAuth discovery)
+app.route('/.well-known', createWellKnownRoutes())
 
 // OAuth routes (public, no authentication required)
 // Note: OAuth routes will be mounted with Supabase client below if available
