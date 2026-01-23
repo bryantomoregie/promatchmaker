@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-	title: "The Introduction | Smart Notes for Matchmakers",
+	title: "Smart Notes for Matchmakers",
 	description:
 		"AI-assisted matchmaking tool that empowers you to connect friends and family. Works in Claude, ChatGPT, or mobile app. You're in control - AI assists, you decide.",
 	keywords: [
@@ -32,23 +32,23 @@ export const metadata: Metadata = {
 		apple: "/apple-touch-icon/apple-touch-icon-180x180.png",
 	},
 	openGraph: {
-		title: "The Introduction | Smart Notes for Matchmakers",
+		title: "Smart Notes for Matchmakers",
 		description:
 			"AI-assisted matchmaking tool that empowers you to connect friends and family. Works in Claude, ChatGPT, or mobile app.",
 		type: "website",
-		siteName: "The Introduction",
+		siteName: "Matchmaker by The Introduction",
 		images: [
 			{
 				url: "/og-image.png",
 				width: 1200,
 				height: 630,
-				alt: "The Introduction - Smart Notes for Matchmakers",
+				alt: "Smart Notes for Matchmakers",
 			},
 		],
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "The Introduction | Smart Notes for Matchmakers",
+		title: "Smart Notes for Matchmakers",
 		description: "AI-assisted matchmaking tool that empowers you to connect friends and family.",
 		images: ["/og-image.png"],
 	},
