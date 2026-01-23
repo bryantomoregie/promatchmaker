@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, mock } from 'bun:test'
+import { describe, test, expect, beforeEach, mock, spyOn, afterEach } from 'bun:test'
 import { Hono } from 'hono'
 import { createMcpRoutes } from '../../src/routes/mcp'
 import { createMockSupabaseClient } from '../mocks/supabase'
@@ -354,6 +354,206 @@ describe('MCP Routes', () => {
 
 			let res = await app.fetch(req)
 			expect(res.status).toBe(200)
+		})
+	})
+
+	describe('Error logging', () => {
+		test('logError function produces correctly formatted output with timestamp', async () => {
+			// Import the logError function directly to test its format
+			let { logError } = await import('../../src/routes/mcp')
+			let loggedCalls: Array<unknown[]> = []
+			let originalError = console.error
+			console.error = (...args: unknown[]) => {
+				loggedCalls.push(args)
+			}
+
+			logError({
+				timestamp: '2026-01-23T00:00:00.000Z',
+				type: 'TestError',
+				path: '/test/path',
+				status: 500,
+				message: 'Test error message',
+			})
+
+			console.error = originalError
+
+			expect(loggedCalls.length).toBe(1)
+
+			// First arg should be timestamp
+			let firstCall = loggedCalls[0]
+			expect(firstCall[0]).toBe('2026-01-23T00:00:00.000Z')
+
+			// Second arg should be JSON with error details
+			let logData = JSON.parse(firstCall[1] as string)
+			expect(logData.type).toBe('TestError')
+			expect(logData.path).toBe('/test/path')
+			expect(logData.status).toBe(500)
+			expect(logData.message).toBe('Test error message')
+		})
+
+		test('failed requests return 400 status for invalid JSON', async () => {
+			// Make an invalid request that will fail
+			let req = new Request('http://localhost/mcp', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json, text/event-stream',
+					Authorization: 'Bearer valid-token',
+				},
+				body: 'invalid json {{{',
+			})
+
+			let res = await app.fetch(req)
+			expect(res.status).toBe(400)
+
+			let body = await res.json()
+			// The MCP SDK or our handler returns an error object
+			// Check for either our custom format or JSON-RPC error format
+			let hasError =
+				body.error === 'Invalid JSON' ||
+				body.error?.code === -32700 ||
+				body.code === -32700 ||
+				(body.message && body.message.includes('Invalid JSON'))
+			expect(hasError).toBe(true)
+		})
+
+		test('error responses include correct status code for syntax errors', async () => {
+			// Make an invalid request
+			let req = new Request('http://localhost/mcp', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json, text/event-stream',
+					Authorization: 'Bearer valid-token',
+				},
+				body: 'invalid json',
+			})
+
+			let res = await app.fetch(req)
+			expect(res.status).toBe(400)
+		})
+
+		test('MCP tool error responses follow specification format', async () => {
+			// Mock Supabase to return an error for a tool call
+			let errorMockSupabaseClient = createMockSupabaseClient({
+				auth: {
+					getUser: mock(async () => ({
+						data: { user: { id: 'user-123' } },
+						error: null,
+					})),
+				},
+				from: mock(() => ({
+					select: mock(() => ({
+						eq: mock(() => ({
+							eq: mock(() => ({
+								single: mock(async () => ({
+									data: null,
+									error: { message: 'Person not found', code: 'PGRST116' },
+								})),
+							})),
+						})),
+					})),
+					insert: mock(() => ({
+						select: mock(() => ({
+							single: mock(async () => ({
+								data: null,
+								error: { message: 'Database error', code: 'DB001' },
+							})),
+						})),
+					})),
+				})),
+			})
+
+			let errorApp = new Hono()
+			errorApp.route('/mcp', createMcpRoutes(errorMockSupabaseClient))
+
+			// Now call a tool that will fail (with bad arguments to trigger error)
+			let toolReq = new Request('http://localhost/mcp', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json, text/event-stream',
+					Authorization: 'Bearer valid-token',
+				},
+				body: JSON.stringify({
+					jsonrpc: '2.0',
+					method: 'tools/call',
+					params: {
+						name: 'get_person',
+						arguments: { id: 'non-existent-id' },
+					},
+					id: 2,
+				}),
+			})
+
+			let res = await errorApp.fetch(toolReq)
+			expect(res.status).toBe(200) // MCP returns 200 with error in body
+
+			let body = await res.text()
+
+			// Parse SSE response to find the tool result
+			// SSE format: "data: {...}\n\n"
+			let hasErrorResponse = false
+			let lines = body.split('\n')
+			for (let line of lines) {
+				if (line.startsWith('data:')) {
+					try {
+						let jsonStr = line.slice(5).trim()
+						if (!jsonStr) continue
+						let data = JSON.parse(jsonStr)
+						// MCP error format: isError: true with content array containing error message
+						if (data.result?.isError === true && Array.isArray(data.result?.content)) {
+							let textContent = data.result.content.find(
+								(c: { type: string; text?: string }) => c.type === 'text'
+							)
+							if (textContent && textContent.text.startsWith('Error:')) {
+								hasErrorResponse = true
+								break
+							}
+						}
+					} catch {
+						// Skip non-JSON lines
+					}
+				}
+			}
+
+			expect(hasErrorResponse).toBe(true)
+		})
+
+		test('authentication errors return 401 status', async () => {
+			let authErrorMockSupabaseClient = createMockSupabaseClient({
+				auth: {
+					getUser: mock(async () => ({
+						data: { user: null },
+						error: { message: 'Invalid token' },
+					})),
+				},
+			})
+
+			let authErrorApp = new Hono()
+			authErrorApp.route('/mcp', createMcpRoutes(authErrorMockSupabaseClient))
+
+			let req = new Request('http://localhost/mcp', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json, text/event-stream',
+					Authorization: 'Bearer invalid-token',
+				},
+				body: JSON.stringify({
+					jsonrpc: '2.0',
+					method: 'initialize',
+					params: {
+						protocolVersion: '2024-11-05',
+						capabilities: {},
+						clientInfo: { name: 'test-client', version: '1.0.0' },
+					},
+					id: 1,
+				}),
+			})
+
+			let res = await authErrorApp.fetch(req)
+			expect(res.status).toBe(401)
 		})
 	})
 })

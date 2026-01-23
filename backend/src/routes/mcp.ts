@@ -13,6 +13,27 @@ type Env = {
 	}
 }
 
+// Error logging utility
+export type ErrorLogEntry = {
+	timestamp: string
+	type: string
+	path: string
+	status: number
+	message: string
+}
+
+export let logError = (entry: ErrorLogEntry) => {
+	console.error(
+		entry.timestamp,
+		JSON.stringify({
+			type: entry.type,
+			path: entry.path,
+			status: entry.status,
+			message: entry.message,
+		})
+	)
+}
+
 export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 	let app = new Hono<Env>()
 
@@ -47,25 +68,54 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 	// Authentication middleware
 	let authMiddleware = async (c: Context<Env>, next: Next) => {
 		let authHeader = c.req.header('Authorization')
+		let path = new URL(c.req.url).pathname
 
 		if (!authHeader) {
+			logError({
+				timestamp: new Date().toISOString(),
+				type: 'AuthenticationError',
+				path,
+				status: 401,
+				message: 'Missing Authorization header',
+			})
 			throw new HTTPException(401, { message: 'Unauthorized' })
 		}
 
 		let token = authHeader.replace('Bearer ', '')
 
 		if (token === authHeader) {
+			logError({
+				timestamp: new Date().toISOString(),
+				type: 'AuthenticationError',
+				path,
+				status: 401,
+				message: 'Invalid Authorization header format',
+			})
 			throw new HTTPException(401, { message: 'Unauthorized' })
 		}
 
 		let { data, error } = await supabaseClient.auth.getUser(token)
 
 		if (error || !data.user) {
+			logError({
+				timestamp: new Date().toISOString(),
+				type: 'AuthenticationError',
+				path,
+				status: 401,
+				message: error?.message || 'Invalid token',
+			})
 			throw new HTTPException(401, { message: 'Unauthorized' })
 		}
 
 		// Check for required scope
 		if (!hasRequiredScope(data.user)) {
+			logError({
+				timestamp: new Date().toISOString(),
+				type: 'AuthorizationError',
+				path,
+				status: 403,
+				message: 'User lacks required scope: mcp:access',
+			})
 			throw new HTTPException(403, { message: 'Forbidden: insufficient scope' })
 		}
 
@@ -555,6 +605,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 	// Handle all MCP requests
 	app.all('/', authMiddleware, async c => {
 		let userId = c.get('userId')
+		let path = new URL(c.req.url).pathname
 
 		// Create transport in stateless mode (no session ID generator)
 		let transport = new WebStandardStreamableHTTPServerTransport({
@@ -571,7 +622,18 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 			let response = await transport.handleRequest(c.req.raw)
 			return response
 		} catch (error) {
-			console.error('MCP request error:', error)
+			let errorType = error instanceof Error ? error.constructor.name : 'UnknownError'
+			let errorMessage = error instanceof Error ? error.message : String(error)
+			let status = error instanceof SyntaxError ? 400 : 500
+
+			logError({
+				timestamp: new Date().toISOString(),
+				type: errorType,
+				path,
+				status,
+				message: errorMessage,
+			})
+
 			if (error instanceof SyntaxError) {
 				return c.json({ error: 'Invalid JSON' }, 400)
 			}
