@@ -24,6 +24,13 @@ function isValidUrl(urlString: string): boolean {
 export let createRegisterRoutes = (): Hono => {
 	let app = new Hono()
 
+	// Handle GET requests - return 405 Method Not Allowed per RFC 7591
+	app.get('/', c => {
+		return c.text('Method Not Allowed', 405, {
+			Allow: 'POST',
+		})
+	})
+
 	app.post('/', async c => {
 		let body: unknown
 

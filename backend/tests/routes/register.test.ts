@@ -221,3 +221,19 @@ describe('POST /register', () => {
 		expect(storedClient?.redirectUris).toEqual(['http://localhost:3000/callback'])
 	})
 })
+
+describe('GET /register', () => {
+	test('should return 405 Method Not Allowed with Allow header', async () => {
+		let app = new Hono()
+		app.route('/register', createRegisterRoutes())
+
+		let req = new Request('http://localhost/register', {
+			method: 'GET',
+		})
+
+		let res = await app.fetch(req)
+
+		expect(res.status).toBe(405)
+		expect(res.headers.get('Allow')).toBe('POST')
+	})
+})
