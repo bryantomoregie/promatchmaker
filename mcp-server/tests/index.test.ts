@@ -1,5 +1,13 @@
 import { describe, test, expect, mock } from 'bun:test'
-import type { ApiClient, Person, Introduction, Match, Feedback } from '../src/api'
+import type {
+	ApiClient,
+	Person,
+	Introduction,
+	Match,
+	Feedback,
+	PersonPreferences,
+	PersonPersonality,
+} from '../src/api'
 
 function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 	return {
@@ -34,8 +42,8 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 					age?: number
 					location?: string
 					gender?: string
-					preferences?: object
-					personality?: object
+					preferences?: PersonPreferences
+					personality?: PersonPersonality
 					notes?: string
 				}
 			): Promise<Person> => ({

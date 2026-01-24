@@ -2,16 +2,12 @@ import { describe, test, expect, beforeEach } from 'bun:test'
 import { Hono } from 'hono'
 import { createRegisterRoutes } from '../../src/routes/register'
 import * as clientStore from '../../src/lib/clientStore'
+import type { OAuthErrorResponse } from '../../src/schemas/oauth'
 
 type ClientRegistrationResponse = {
 	client_id: string
 	client_name: string
 	redirect_uris: string[]
-}
-
-type OAuthErrorResponse = {
-	error: string
-	error_description?: string
 }
 
 describe('POST /register', () => {

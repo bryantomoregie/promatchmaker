@@ -68,6 +68,19 @@ let getFeedbackInputSchema = z.object({
 	id: z.string().min(1, 'ID is required'),
 })
 
+export interface PersonPreferences {
+	ageRange?: { min?: number; max?: number }
+	locations?: string[]
+	genders?: string[]
+	[key: string]: unknown
+}
+
+export interface PersonPersonality {
+	traits?: string[]
+	interests?: string[]
+	[key: string]: unknown
+}
+
 export interface Person {
 	id: string
 	name: string
@@ -75,8 +88,8 @@ export interface Person {
 	age?: number | null
 	location?: string | null
 	gender?: string | null
-	preferences?: object | null
-	personality?: object | null
+	preferences?: PersonPreferences | null
+	personality?: PersonPersonality | null
 	notes?: string | null
 	active: boolean
 	created_at: string
@@ -195,8 +208,8 @@ export class ApiClient {
 			age?: number
 			location?: string
 			gender?: string
-			preferences?: object
-			personality?: object
+			preferences?: PersonPreferences
+			personality?: PersonPersonality
 			notes?: string
 		}
 	): Promise<Person> {

@@ -7,16 +7,7 @@ import { createLoginRoutes } from '../../src/routes/login'
 import { createMockSupabaseClient } from '../mocks/supabase'
 import * as clientStore from '../../src/lib/clientStore'
 import * as authCodeStore from '../../src/lib/authCodeStore'
-
-type OAuthServerMetadata = {
-	issuer: string
-	authorization_endpoint: string
-	token_endpoint: string
-	registration_endpoint: string
-	response_types_supported: string[]
-	grant_types_supported: string[]
-	code_challenge_methods_supported: string[]
-}
+import type { OAuthServerMetadata, OAuthTokenResponse } from '../../src/schemas/oauth'
 
 type ProtectedResourceMetadata = {
 	resource: string
@@ -27,13 +18,6 @@ type ClientRegistrationResponse = {
 	client_id: string
 	client_name: string
 	redirect_uris: string[]
-}
-
-type OAuthTokenResponse = {
-	access_token: string
-	token_type: string
-	expires_in: number
-	refresh_token: string
 }
 
 // PKCE helper: generate code_challenge from code_verifier using S256

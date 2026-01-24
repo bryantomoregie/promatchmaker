@@ -3,14 +3,7 @@ import { Hono } from 'hono'
 import { createOAuthRoutes } from '../../src/routes/oauth'
 import { createMockSupabaseClient } from '../mocks/supabase'
 import * as authCodeStore from '../../src/lib/authCodeStore'
-
-type OAuthErrorResponse = { error: string; error_description?: string }
-type OAuthTokenResponse = {
-	access_token: string
-	token_type: string
-	expires_in: number
-	refresh_token: string
-}
+import type { OAuthErrorResponse, OAuthTokenResponse } from '../../src/schemas/oauth'
 
 describe('GET /oauth/authorize', () => {
 	test('should redirect to login page with OAuth parameters', async () => {

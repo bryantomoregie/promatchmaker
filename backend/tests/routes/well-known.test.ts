@@ -1,16 +1,7 @@
 import { describe, test, expect } from 'bun:test'
 import { Hono } from 'hono'
 import { createWellKnownRoutes } from '../../src/routes/well-known'
-
-type OAuthServerMetadata = {
-	issuer: string
-	authorization_endpoint: string
-	token_endpoint: string
-	registration_endpoint: string
-	response_types_supported: string[]
-	grant_types_supported: string[]
-	code_challenge_methods_supported: string[]
-}
+import type { OAuthServerMetadata } from '../../src/schemas/oauth'
 
 describe('GET /.well-known/oauth-authorization-server', () => {
 	test('should return 200 with valid JSON', async () => {

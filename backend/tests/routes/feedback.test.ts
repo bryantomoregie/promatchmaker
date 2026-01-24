@@ -2,7 +2,7 @@ import { describe, test, expect, mock } from 'bun:test'
 import { Hono } from 'hono'
 import { createFeedbackRoutes } from '../../src/routes/feedback'
 import { createMockSupabaseClient } from '../mocks/supabase'
-import { feedbackResponseSchema } from '../../src/schemas/feedback'
+import { feedbackResponseSchema, type FeedbackResponse } from '../../src/schemas/feedback'
 
 type Variables = {
 	userId: string
@@ -158,7 +158,7 @@ describe('GET /api/feedback', () => {
 		let req = new Request('http://localhost/?introductionId=test-id')
 
 		let res = await app.fetch(req)
-		let json = (await res.json()) as any[]
+		let json = (await res.json()) as FeedbackResponse[]
 
 		expect(res.status).toBe(200)
 		expect(Array.isArray(json)).toBe(true)

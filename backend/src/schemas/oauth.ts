@@ -35,3 +35,26 @@ export let tokenRequestSchema = z.discriminatedUnion('grant_type', [
 ])
 
 export type TokenRequest = z.infer<typeof tokenRequestSchema>
+
+// OAuth response types for consistent typing across the codebase
+export type OAuthErrorResponse = {
+	error: string
+	error_description?: string
+}
+
+export type OAuthTokenResponse = {
+	access_token: string
+	token_type: string
+	expires_in: number
+	refresh_token?: string
+}
+
+export type OAuthServerMetadata = {
+	issuer: string
+	authorization_endpoint: string
+	token_endpoint: string
+	registration_endpoint?: string
+	response_types_supported: string[]
+	grant_types_supported: string[]
+	code_challenge_methods_supported: string[]
+}

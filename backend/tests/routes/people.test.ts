@@ -2,7 +2,7 @@ import { describe, test, expect, mock } from 'bun:test'
 import { Hono } from 'hono'
 import { createPeopleRoutes } from '../../src/routes/people'
 import { createMockSupabaseClient } from '../mocks/supabase'
-import { personResponseSchema } from '../../src/schemas/people'
+import { personResponseSchema, type PersonResponse } from '../../src/schemas/people'
 
 type Variables = {
 	userId: string
@@ -224,7 +224,7 @@ describe('GET /api/people', () => {
 		let req = new Request('http://localhost/')
 
 		let res = await app.fetch(req)
-		let json = (await res.json()) as any[]
+		let json = (await res.json()) as PersonResponse[]
 
 		expect(res.status).toBe(200)
 		expect(Array.isArray(json)).toBe(true)
