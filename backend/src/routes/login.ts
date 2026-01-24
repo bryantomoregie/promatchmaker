@@ -305,8 +305,23 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient): Hono => {
 
 		// Generate and store authorization code with session tokens and PKCE challenge
 		let session = authResult.data.session
+		let user = authResult.data.user
+		if (!user) {
+			return c.html(
+				renderLoginPage({
+					client_id,
+					redirect_uri,
+					response_type: 'code',
+					state,
+					code_challenge,
+					code_challenge_method,
+					error: 'Authentication failed: no user returned',
+					mode,
+				})
+			)
+		}
 		let authorizationCode = storeAuthorizationCode({
-			userId: authResult.data.user!.id,
+			userId: user.id,
 			clientId: client_id,
 			redirectUri: redirect_uri,
 			codeChallenge: code_challenge,

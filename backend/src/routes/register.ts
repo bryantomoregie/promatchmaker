@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
+import type { Context } from 'hono'
+import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { registerClient } from '../lib/clientStore'
 
 // OAuth 2.0 Dynamic Client Registration error response helper
-function registrationError(c: any, error: string, description?: string, status = 400) {
+function registrationError(c: Context, error: string, description?: string, status: ContentfulStatusCode = 400) {
 	return c.json(
 		{
 			error,

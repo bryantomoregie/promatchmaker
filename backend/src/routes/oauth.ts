@@ -1,11 +1,13 @@
 import { Hono } from 'hono'
+import type { Context } from 'hono'
+import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { zValidator } from '@hono/zod-validator'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { authorizeQuerySchema } from '../schemas/oauth'
 import { getAndRemoveAuthorizationCode, verifyCodeChallenge } from '../lib/authCodeStore'
 
 // OAuth 2.0 error response helper
-function oauthError(c: any, error: string, description?: string, status = 400) {
+function oauthError(c: Context, error: string, description?: string, status: ContentfulStatusCode = 400) {
 	return c.json(
 		{
 			error,
@@ -60,7 +62,7 @@ export let createOAuthRoutes = (supabaseClient?: SupabaseClient): Hono => {
 	return app
 }
 
-async function handleAuthorizationCodeGrant(c: any, body: Record<string, any>) {
+async function handleAuthorizationCodeGrant(c: Context, body: Record<string, unknown>) {
 	let code = body.code as string | undefined
 	let redirectUri = body.redirect_uri as string | undefined
 	let clientId = body.client_id as string | undefined
@@ -112,8 +114,8 @@ async function handleAuthorizationCodeGrant(c: any, body: Record<string, any>) {
 }
 
 async function handleRefreshTokenGrant(
-	c: any,
-	body: Record<string, any>,
+	c: Context,
+	body: Record<string, unknown>,
 	supabaseClient?: SupabaseClient
 ) {
 	let refreshToken = body.refresh_token as string | undefined
