@@ -97,6 +97,25 @@ export function ReferralForm() {
 					disabled={isSubmitting}
 				/>
 
+				<Input
+					placeholder="Matchmaker's Name (optional)"
+					type="text"
+					aria-label="Matchmaker's Name"
+					{...register("matchmaker_name")}
+					error={errors.matchmaker_name?.message}
+					disabled={isSubmitting}
+				/>
+
+				<Input
+					placeholder="Matchmaker's Email"
+					type="email"
+					required
+					aria-label="Matchmaker's Email"
+					{...register("matchmaker_email")}
+					error={errors.matchmaker_email?.message}
+					disabled={isSubmitting}
+				/>
+
 				{submitStatus && (
 					<div
 						className={`rounded-lg p-4 ${
