@@ -113,19 +113,6 @@ export function FAQ() {
 							</div>
 						))}
 					</div>
-
-					{/* Contact CTA */}
-					<div className="mt-16 text-center">
-						<p className="font-display text-base font-normal text-gray-600 dark:text-gray-400">
-							Still have questions?{" "}
-							<a
-								href="mailto:hello@theintro.xyz"
-								className="font-semibold text-sky-600 transition-colors hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300"
-							>
-								Get in touch
-							</a>
-						</p>
-					</div>
 				</div>
 			</div>
 
