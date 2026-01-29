@@ -2,6 +2,7 @@ import type { PersonPreferences, PersonPersonality } from './api.js'
 
 // Tool name type - all valid tool names
 export type ToolName =
+	| 'start_intake_interview'
 	| 'add_person'
 	| 'list_people'
 	| 'get_person'
@@ -9,7 +10,6 @@ export type ToolName =
 	| 'create_introduction'
 	| 'list_introductions'
 	| 'update_introduction'
-	| 'find_matches'
 	| 'delete_person'
 	| 'get_introduction'
 	| 'submit_feedback'
@@ -17,6 +17,10 @@ export type ToolName =
 	| 'get_feedback'
 
 // Discriminated union types for tool arguments
+export type StartIntakeInterviewArgs = {
+	single_name?: string
+}
+
 export type AddPersonArgs = {
 	name: string
 }
@@ -52,10 +56,6 @@ export type UpdateIntroductionArgs = {
 	notes?: string
 }
 
-export type FindMatchesArgs = {
-	person_id: string
-}
-
 export type DeletePersonArgs = {
 	id: string
 }
@@ -81,6 +81,7 @@ export type GetFeedbackArgs = {
 
 // Discriminated union for all tool calls
 export type ToolCall =
+	| { name: 'start_intake_interview'; args: StartIntakeInterviewArgs }
 	| { name: 'add_person'; args: AddPersonArgs }
 	| { name: 'list_people'; args: ListPeopleArgs }
 	| { name: 'get_person'; args: GetPersonArgs }
@@ -88,7 +89,6 @@ export type ToolCall =
 	| { name: 'create_introduction'; args: CreateIntroductionArgs }
 	| { name: 'list_introductions'; args: ListIntroductionsArgs }
 	| { name: 'update_introduction'; args: UpdateIntroductionArgs }
-	| { name: 'find_matches'; args: FindMatchesArgs }
 	| { name: 'delete_person'; args: DeletePersonArgs }
 	| { name: 'get_introduction'; args: GetIntroductionArgs }
 	| { name: 'submit_feedback'; args: SubmitFeedbackArgs }
@@ -149,13 +149,6 @@ export function validateUpdateIntroductionArgs(args: unknown): UpdateIntroductio
 	}
 	let { id, status, notes } = args as UpdateIntroductionArgs
 	return { id, status, notes }
-}
-
-export function validateFindMatchesArgs(args: unknown): FindMatchesArgs {
-	if (!isValidObject(args) || !hasString(args, 'person_id')) {
-		throw new Error('Invalid arguments: person_id is required and must be a string')
-	}
-	return { person_id: args.person_id as string }
 }
 
 export function validateDeletePersonArgs(args: unknown): DeletePersonArgs {

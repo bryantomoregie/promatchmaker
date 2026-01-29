@@ -1,6 +1,9 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import {
+	CallToolRequestSchema,
+	ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js'
 import { loadConfig } from './config.js'
 import { ApiClient } from './api.js'
 import { createToolHandlers, isValidToolName } from './handlers.js'
@@ -22,8 +25,22 @@ export function createServer(apiClient: ApiClient) {
 	server.setRequestHandler(ListToolsRequestSchema, async () => ({
 		tools: [
 			{
+				name: 'start_intake_interview',
+				description: 'MANDATORY FIRST STEP. When a user says "match", "help find a partner", "add someone", or mentions wanting to help a friend/family member find love - call this tool IMMEDIATELY. Do NOT call list_people, get_person, or any other tool first. This returns the interview script you must follow to gather information conversationally.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						single_name: {
+							type: 'string',
+							description: 'Name of the single person to be matched (optional - can be gathered during interview)'
+						},
+					},
+					required: [],
+				},
+			},
+			{
 				name: 'add_person',
-				description: 'Add a new person to the matchmaker',
+				description: 'Store a new single in the database AFTER completing the intake interview via start_intake_interview. Never use this as a first step.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -34,7 +51,7 @@ export function createServer(apiClient: ApiClient) {
 			},
 			{
 				name: 'list_people',
-				description: 'List all people in the matchmaker',
+				description: 'ADMIN ONLY. Lists singles in database. NEVER use this when user says they want to "match someone" or "help a friend" - those requests require start_intake_interview FIRST. Only use list_people for explicit admin requests like "show me everyone in the system".',
 				inputSchema: {
 					type: 'object',
 					properties: {},
@@ -42,7 +59,7 @@ export function createServer(apiClient: ApiClient) {
 			},
 			{
 				name: 'get_person',
-				description: 'Retrieve detailed information about a specific person',
+				description: 'Retrieve details for an existing person by ID. Not for intake - use start_intake_interview when someone wants to match a new person.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -107,18 +124,7 @@ export function createServer(apiClient: ApiClient) {
 					required: ['id'],
 				},
 			},
-			{
-				name: 'find_matches',
-				description: 'Find compatible matches for a person',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						person_id: { type: 'string', description: 'Person ID (UUID) to find matches for' },
-					},
-					required: ['person_id'],
-				},
-			},
-			{
+				{
 				name: 'delete_person',
 				description: 'Soft-delete a person (sets active=false)',
 				inputSchema: {

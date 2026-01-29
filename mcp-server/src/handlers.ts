@@ -6,13 +6,13 @@ import {
 	validateUpdatePersonArgs,
 	validateCreateIntroductionArgs,
 	validateUpdateIntroductionArgs,
-	validateFindMatchesArgs,
 	validateDeletePersonArgs,
 	validateGetIntroductionArgs,
 	validateSubmitFeedbackArgs,
 	validateListFeedbackArgs,
 	validateGetFeedbackArgs,
 } from './tools.js'
+import { MATCHMAKER_INTERVIEW_PROMPT } from './prompts.js'
 
 type ToolResult = {
 	content: Array<{ type: 'text'; text: string }>
@@ -29,6 +29,21 @@ function successResult(data: unknown): ToolResult {
 
 export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolHandler> {
 	return {
+		start_intake_interview: async args => {
+			let singleName = (args as { single_name?: string })?.single_name
+			let intro = singleName
+				? `You are conducting an intake interview for ${singleName}.\n\n`
+				: ''
+			return {
+				content: [
+					{
+						type: 'text',
+						text: intro + MATCHMAKER_INTERVIEW_PROMPT,
+					},
+				],
+			}
+		},
+
 		add_person: async args => {
 			let validated = validateAddPersonArgs(args)
 			let result = await apiClient.addPerson(validated.name)
@@ -75,12 +90,6 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 			return successResult(result)
 		},
 
-		find_matches: async args => {
-			let validated = validateFindMatchesArgs(args)
-			let result = await apiClient.findMatches(validated.person_id)
-			return successResult(result)
-		},
-
 		delete_person: async args => {
 			let validated = validateDeletePersonArgs(args)
 			let result = await apiClient.deletePerson(validated.id)
@@ -120,6 +129,7 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 
 export function isValidToolName(name: string): name is ToolName {
 	let validNames: ToolName[] = [
+		'start_intake_interview',
 		'add_person',
 		'list_people',
 		'get_person',
@@ -127,7 +137,6 @@ export function isValidToolName(name: string): name is ToolName {
 		'create_introduction',
 		'list_introductions',
 		'update_introduction',
-		'find_matches',
 		'delete_person',
 		'get_introduction',
 		'submit_feedback',
