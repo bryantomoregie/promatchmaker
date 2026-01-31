@@ -122,7 +122,7 @@ describe('MCP Prompts Capability', () => {
 	test('MATCHMAKER_INTERVIEW_PROMPT contains trigger phrase recognition', () => {
 		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('Recognizing When to Start')
 		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('I want to match')
-		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('list_people')
+		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('list_singles')
 		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('get_person')
 	})
 
@@ -274,7 +274,7 @@ describe('Matching Flow Evaluation Scenarios', () => {
 	test('Eval: New person intake flow', async () => {
 		// Scenario: User says "I want to match my friend Sarah"
 		// Expected flow:
-		// 1. Check if Sarah exists (list_people)
+		// 1. Check if Sarah exists (list_singles)
 		// 2. Sarah doesn't exist, start interview
 		// 3. After interview, add_person + update_person
 		// 4. Call find_matches
@@ -329,7 +329,7 @@ describe('Matching Flow Evaluation Scenarios', () => {
 	test('Eval: Existing person matching flow', async () => {
 		// Scenario: User says "I want to match Marcus" and Marcus exists
 		// Expected flow:
-		// 1. Check if Marcus exists (list_people) - he does
+		// 1. Check if Marcus exists (list_singles) - he does
 		// 2. Get his full profile (get_person)
 		// 3. Profile is complete, skip to find_matches
 		// 4. Present matches

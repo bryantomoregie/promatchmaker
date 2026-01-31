@@ -190,7 +190,7 @@ Then ask:
 Show me all people in my network
 ```
 
-**Expected behavior**: Claude will call the `list_people` tool and display a list of all people, including Sarah.
+**Expected behavior**: Claude will call the `list_singles` tool and display a list of all people, including Sarah.
 
 ## 6. Troubleshooting
 

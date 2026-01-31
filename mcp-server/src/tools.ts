@@ -3,7 +3,7 @@ import type { PersonPreferences, PersonPersonality } from './api.js'
 // Tool name type - all valid tool names
 export type ToolName =
 	| 'add_person'
-	| 'list_people'
+	| 'list_singles'
 	| 'get_person'
 	| 'update_person'
 	| 'find_matches'
@@ -20,7 +20,7 @@ export type AddPersonArgs = {
 	name: string
 }
 
-export type ListPeopleArgs = Record<string, never>
+export type ListSinglesArgs = Record<string, never>
 
 export type GetPersonArgs = {
 	id: string
@@ -81,7 +81,7 @@ export type GetFeedbackArgs = {
 // Discriminated union for all tool calls
 export type ToolCall =
 	| { name: 'add_person'; args: AddPersonArgs }
-	| { name: 'list_people'; args: ListPeopleArgs }
+	| { name: 'list_singles'; args: ListSinglesArgs }
 	| { name: 'get_person'; args: GetPersonArgs }
 	| { name: 'update_person'; args: UpdatePersonArgs }
 	| { name: 'find_matches'; args: FindMatchesArgs }

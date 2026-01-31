@@ -197,7 +197,7 @@ describe('MCP Server', () => {
 		expect(result.id).toBe('test-id')
 	})
 
-	test('API client handles list_people correctly (unit test)', async () => {
+	test('API client handles list_singles correctly (unit test)', async () => {
 		let mockListPeople = mock(
 			async (): Promise<Person[]> => [
 				{

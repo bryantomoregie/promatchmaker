@@ -99,7 +99,7 @@ export function createServer(apiClient: ApiClient) {
 				},
 			},
 			{
-				name: 'list_people',
+				name: 'list_singles',
 				description: 'List all singles in the database. Use for admin purposes or to find potential matches after an intake interview is complete.',
 				inputSchema: {
 					type: 'object',

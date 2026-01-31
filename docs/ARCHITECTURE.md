@@ -186,7 +186,7 @@ graph TB
 
         subgraph "Tools"
             ADD[add_person]
-            LIST[list_people]
+            LIST[list_singles]
         end
 
         subgraph "Client"
@@ -210,7 +210,7 @@ graph TB
 
 **Capabilities:**
 
-- **Tool Interface**: Exposes `add_person` and `list_people` tools
+- **Tool Interface**: Exposes `add_person` and `list_singles` tools
 - **Authentication**: Uses JWT token from config
 - **Validation**: Zod schema validation for API responses
 - **Error Handling**: Graceful error propagation to AI assistant

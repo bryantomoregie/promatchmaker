@@ -472,7 +472,7 @@ sequenceDiagram
     participant Database
 
     User->>AI Assistant: "Show me all my people"
-    AI Assistant->>MCP Server: Call tool: list_people
+    AI Assistant->>MCP Server: Call tool: list_singles
 
     MCP Server->>MCP Server: Load config
     MCP Server->>API: GET /api/people<br/>Authorization: Bearer {token}
@@ -512,7 +512,7 @@ sequenceDiagram
     User->>AI Assistant: Ask something
     AI Assistant->>MCP Server: Start MCP server process
     MCP Server->>MCP Server: Load config from env
-    MCP Server->>AI Assistant: Register tools:<br/>- add_person<br/>- list_people
+    MCP Server->>AI Assistant: Register tools:<br/>- add_person<br/>- list_singles
 
     AI Assistant->>User: Ready to use tools
 

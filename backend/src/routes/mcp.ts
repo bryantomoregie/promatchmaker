@@ -187,8 +187,8 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 					},
 				},
 				{
-					name: 'list_people',
-					description: 'List all people in the matchmaker',
+					name: 'list_singles',
+					description: 'List all singles in the matchmaker',
 					inputSchema: {
 						type: 'object',
 						properties: {},
@@ -367,7 +367,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 					}
 				}
 
-				if (name === 'list_people') {
+				if (name === 'list_singles') {
 					let { data, error } = await supabaseClient
 						.from('people')
 						.select('*')
