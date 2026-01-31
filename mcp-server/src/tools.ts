@@ -2,7 +2,6 @@ import type { PersonPreferences, PersonPersonality } from './api.js'
 
 // Tool name type - all valid tool names
 export type ToolName =
-	| 'start_intake_interview'
 	| 'add_person'
 	| 'list_people'
 	| 'get_person'
@@ -15,11 +14,6 @@ export type ToolName =
 	| 'submit_feedback'
 	| 'list_feedback'
 	| 'get_feedback'
-
-// Discriminated union types for tool arguments
-export type StartIntakeInterviewArgs = {
-	single_name?: string
-}
 
 export type AddPersonArgs = {
 	name: string
@@ -81,7 +75,6 @@ export type GetFeedbackArgs = {
 
 // Discriminated union for all tool calls
 export type ToolCall =
-	| { name: 'start_intake_interview'; args: StartIntakeInterviewArgs }
 	| { name: 'add_person'; args: AddPersonArgs }
 	| { name: 'list_people'; args: ListPeopleArgs }
 	| { name: 'get_person'; args: GetPersonArgs }

@@ -3,10 +3,13 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema,
+	ListPromptsRequestSchema,
+	GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import { loadConfig } from './config.js'
 import { ApiClient } from './api.js'
 import { createToolHandlers, isValidToolName } from './handlers.js'
+import { MATCHMAKER_INTERVIEW_PROMPT } from './prompts.js'
 
 export function createServer(apiClient: ApiClient) {
 	let server = new Server(
@@ -17,30 +20,76 @@ export function createServer(apiClient: ApiClient) {
 		{
 			capabilities: {
 				tools: {},
+				prompts: {},
 			},
 		}
 	)
+
+	// Register prompts
+	server.setRequestHandler(ListPromptsRequestSchema, async () => ({
+		prompts: [
+			{
+				name: 'matchmaker-intake-interview',
+				description:
+					'The complete 14-phase intake interview methodology for matchmakers. Use this when someone wants to match a friend/family member. Guides you through gathering all necessary information conversationally.',
+				arguments: [
+					{
+						name: 'single_name',
+						description: 'Name of the single person being matched (optional)',
+						required: false,
+					},
+					{
+						name: 'matchmaker_name',
+						description: 'Name of the matchmaker conducting the referral (optional)',
+						required: false,
+					},
+				],
+			},
+		],
+	}))
+
+	server.setRequestHandler(GetPromptRequestSchema, async request => {
+		let { name, arguments: args } = request.params
+
+		if (name !== 'matchmaker-intake-interview') {
+			throw new Error(`Unknown prompt: ${name}`)
+		}
+
+		let singleName = args?.single_name
+		let matchmakerName = args?.matchmaker_name
+
+		let contextIntro = ''
+		if (singleName || matchmakerName) {
+			contextIntro = '## Interview Context\n\n'
+			if (matchmakerName) {
+				contextIntro += `You are speaking with ${matchmakerName}, who is the matchmaker.\n`
+			}
+			if (singleName) {
+				contextIntro += `They want to help match ${singleName}.\n`
+			}
+			contextIntro += '\n---\n\n'
+		}
+
+		return {
+			description: 'Matchmaker intake interview methodology',
+			messages: [
+				{
+					role: 'user',
+					content: {
+						type: 'text',
+						text: contextIntro + MATCHMAKER_INTERVIEW_PROMPT,
+					},
+				},
+			],
+		}
+	})
 
 	// Register tools
 	server.setRequestHandler(ListToolsRequestSchema, async () => ({
 		tools: [
 			{
-				name: 'start_intake_interview',
-				description: 'MANDATORY FIRST STEP. When a user says "match", "help find a partner", "add someone", or mentions wanting to help a friend/family member find love - call this tool IMMEDIATELY. Do NOT call list_people, get_person, or any other tool first. This returns the interview script you must follow to gather information conversationally.',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						single_name: {
-							type: 'string',
-							description: 'Name of the single person to be matched (optional - can be gathered during interview)'
-						},
-					},
-					required: [],
-				},
-			},
-			{
 				name: 'add_person',
-				description: 'Store a new single in the database AFTER completing the intake interview via start_intake_interview. Never use this as a first step.',
+				description: 'Store a new single in the database AFTER completing the intake interview. Never use this as a first step - always conduct the interview first.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -51,7 +100,7 @@ export function createServer(apiClient: ApiClient) {
 			},
 			{
 				name: 'list_people',
-				description: 'ADMIN ONLY. Lists singles in database. NEVER use this when user says they want to "match someone" or "help a friend" - those requests require start_intake_interview FIRST. Only use list_people for explicit admin requests like "show me everyone in the system".',
+				description: 'List all singles in the database. Use for admin purposes or to find potential matches after an intake interview is complete.',
 				inputSchema: {
 					type: 'object',
 					properties: {},
@@ -59,7 +108,7 @@ export function createServer(apiClient: ApiClient) {
 			},
 			{
 				name: 'get_person',
-				description: 'Retrieve details for an existing person by ID. Not for intake - use start_intake_interview when someone wants to match a new person.',
+				description: 'Retrieve detailed profile for an existing person by ID. Use to review a profile or find matching candidates.',
 				inputSchema: {
 					type: 'object',
 					properties: {
