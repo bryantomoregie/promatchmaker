@@ -136,6 +136,18 @@ export function createServer(apiClient: ApiClient) {
 				},
 			},
 			{
+				name: 'find_matches',
+				description:
+					'Find compatible matches for a person. Returns a ranked list of potential matches based on preferences, location, age range, and deal breakers. Use this after completing an intake interview to suggest matches to the matchmaker.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						person_id: { type: 'string', description: 'Person ID (UUID) to find matches for' },
+					},
+					required: ['person_id'],
+				},
+			},
+			{
 				name: 'create_introduction',
 				description: 'Create an introduction between two people',
 				inputSchema: {

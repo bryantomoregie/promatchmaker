@@ -6,6 +6,7 @@ export type ToolName =
 	| 'list_people'
 	| 'get_person'
 	| 'update_person'
+	| 'find_matches'
 	| 'create_introduction'
 	| 'list_introductions'
 	| 'update_introduction'
@@ -34,6 +35,10 @@ export type UpdatePersonArgs = {
 	preferences?: PersonPreferences
 	personality?: PersonPersonality
 	notes?: string
+}
+
+export type FindMatchesArgs = {
+	person_id: string
 }
 
 export type CreateIntroductionArgs = {
@@ -79,6 +84,7 @@ export type ToolCall =
 	| { name: 'list_people'; args: ListPeopleArgs }
 	| { name: 'get_person'; args: GetPersonArgs }
 	| { name: 'update_person'; args: UpdatePersonArgs }
+	| { name: 'find_matches'; args: FindMatchesArgs }
 	| { name: 'create_introduction'; args: CreateIntroductionArgs }
 	| { name: 'list_introductions'; args: ListIntroductionsArgs }
 	| { name: 'update_introduction'; args: UpdateIntroductionArgs }
@@ -117,6 +123,13 @@ export function validateUpdatePersonArgs(args: unknown): UpdatePersonArgs {
 	}
 	let { id, ...updates } = args as UpdatePersonArgs
 	return { id, ...updates }
+}
+
+export function validateFindMatchesArgs(args: unknown): FindMatchesArgs {
+	if (!isValidObject(args) || !hasString(args, 'person_id')) {
+		throw new Error('Invalid arguments: person_id is required and must be a string')
+	}
+	return { person_id: args.person_id as string }
 }
 
 export function validateCreateIntroductionArgs(args: unknown): CreateIntroductionArgs {

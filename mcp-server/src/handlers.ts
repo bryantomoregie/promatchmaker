@@ -4,6 +4,7 @@ import {
 	validateAddPersonArgs,
 	validateGetPersonArgs,
 	validateUpdatePersonArgs,
+	validateFindMatchesArgs,
 	validateCreateIntroductionArgs,
 	validateUpdateIntroductionArgs,
 	validateDeletePersonArgs,
@@ -49,6 +50,12 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 			let validated = validateUpdatePersonArgs(args)
 			let { id, ...updates } = validated
 			let result = await apiClient.updatePerson(id, updates)
+			return successResult(result)
+		},
+
+		find_matches: async args => {
+			let validated = validateFindMatchesArgs(args)
+			let result = await apiClient.findMatches(validated.person_id)
 			return successResult(result)
 		},
 
@@ -117,6 +124,7 @@ export function isValidToolName(name: string): name is ToolName {
 		'list_people',
 		'get_person',
 		'update_person',
+		'find_matches',
 		'create_introduction',
 		'list_introductions',
 		'update_introduction',
