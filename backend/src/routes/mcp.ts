@@ -346,6 +346,9 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 		server.setRequestHandler(CallToolRequestSchema, async request => {
 			let { name, arguments: args } = request.params
 
+			console.log(`[MCP Tool] Calling tool: ${name} for userId: ${userId}`)
+			console.log(`[MCP Tool] Arguments:`, JSON.stringify(args))
+
 			try {
 				if (name === 'add_person') {
 					if (
@@ -356,12 +359,30 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 					) {
 						throw new Error('Invalid arguments: name is required and must be a string')
 					}
+
+					// First verify the matchmaker exists
+					let { data: matchmaker, error: matchmakerError } = await supabaseClient
+						.from('matchmakers')
+						.select('id, name')
+						.eq('id', userId)
+						.single()
+
+					console.log(`[MCP Tool] Matchmaker lookup for ${userId}:`, matchmaker ? JSON.stringify(matchmaker) : 'NOT FOUND')
+					if (matchmakerError) {
+						console.error(`[MCP Tool] Matchmaker error:`, matchmakerError.message)
+						throw new Error(`Matchmaker not found for user ${userId}. Please sign out and sign back in.`)
+					}
+
 					let { data, error } = await supabaseClient
 						.from('people')
 						.insert({ name: args.name, matchmaker_id: userId })
 						.select()
 						.single()
-					if (error) throw new Error(error.message)
+					if (error) {
+						console.error(`[MCP Tool] Insert error:`, error.message)
+						throw new Error(error.message)
+					}
+					console.log(`[MCP Tool] Person created:`, JSON.stringify(data))
 					return {
 						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
 					}

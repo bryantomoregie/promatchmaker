@@ -345,8 +345,10 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient, supabaseServiceC
 
 		// Create matchmaker record on signup (or ensure it exists on signin)
 		if (supabaseServiceClient) {
+			console.log('[Login] Attempting to create/ensure matchmaker for user:', user.id)
+
 			// Use upsert to handle both signup and signin - creates if doesn't exist
-			let { error: matchmakerError } = await supabaseServiceClient
+			let { data: matchmakerData, error: matchmakerError } = await supabaseServiceClient
 				.from('matchmakers')
 				.upsert(
 					{
@@ -355,13 +357,31 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient, supabaseServiceC
 					},
 					{ onConflict: 'id' }
 				)
+				.select()
+				.single()
 
 			if (matchmakerError) {
 				console.error('[Login] Failed to create matchmaker:', matchmakerError.message)
+				console.error('[Login] Full error:', JSON.stringify(matchmakerError))
 				// Don't block login if matchmaker creation fails, but log it
 			} else {
-				console.log('[Login] Matchmaker record ensured for user:', user.id.substring(0, 8) + '...')
+				console.log('[Login] Matchmaker record created/updated:', JSON.stringify(matchmakerData))
 			}
+
+			// Verify the matchmaker exists
+			let { data: verifyData, error: verifyError } = await supabaseServiceClient
+				.from('matchmakers')
+				.select('*')
+				.eq('id', user.id)
+				.single()
+
+			if (verifyError) {
+				console.error('[Login] Matchmaker verification failed:', verifyError.message)
+			} else {
+				console.log('[Login] Matchmaker verified exists:', JSON.stringify(verifyData))
+			}
+		} else {
+			console.warn('[Login] No service client available - matchmaker record NOT created!')
 		}
 
 		let authorizationCode = storeAuthorizationCode({
