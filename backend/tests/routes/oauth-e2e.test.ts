@@ -39,6 +39,17 @@ function getLocationUrl(response: Response): URL {
 	return new URL(location)
 }
 
+// Helper to extract redirect URL from success HTML page (JavaScript redirect)
+async function getRedirectUrlFromHtml(response: Response): Promise<URL> {
+	let html = await response.text()
+	// Extract URL from: setTimeout(() => window.location.href = "URL", 1000);
+	let match = html.match(/window\.location\.href\s*=\s*"([^"]+)"/)
+	if (!match || !match[1]) {
+		throw new Error('Expected redirect URL in success page HTML')
+	}
+	return new URL(match[1])
+}
+
 // Helper to safely extract authorization code from callback URL
 function getAuthorizationCode(callbackUrl: URL): string {
 	let code = callbackUrl.searchParams.get('code')
@@ -172,14 +183,16 @@ describe('End-to-End OAuth Flow', () => {
 		})
 		let loginRes = await app.fetch(loginReq)
 
-		expect(loginRes.status).toBe(302)
-		let callbackLocation = loginRes.headers.get('Location')
-		expect(callbackLocation).toContain('http://localhost:8080/callback')
-		expect(callbackLocation).toContain('code=')
-		expect(callbackLocation).toContain(`state=${state}`)
+		// Success page is returned with JavaScript redirect
+		expect(loginRes.status).toBe(200)
+		let html = await loginRes.clone().text()
+		expect(html).toContain('Success!')
+		expect(html).toContain('http://localhost:8080/callback')
+		expect(html).toContain('code=')
+		expect(html).toContain(`state=${state}`)
 
-		// Step 7: Extract authorization code from redirect URL
-		let callbackUrl = getLocationUrl(loginRes)
+		// Step 7: Extract authorization code from redirect URL in success page
+		let callbackUrl = await getRedirectUrlFromHtml(loginRes)
 		let authorizationCode = getAuthorizationCode(callbackUrl)
 		let returnedState = callbackUrl.searchParams.get('state')
 
@@ -285,10 +298,11 @@ describe('End-to-End OAuth Flow', () => {
 		})
 		let loginRes = await app.fetch(loginReq)
 
-		expect(loginRes.status).toBe(302)
+		// Success page is returned with JavaScript redirect
+		expect(loginRes.status).toBe(200)
 
-		// Extract authorization code
-		let callbackUrl = getLocationUrl(loginRes)
+		// Extract authorization code from success page
+		let callbackUrl = await getRedirectUrlFromHtml(loginRes)
 		let authorizationCode = getAuthorizationCode(callbackUrl)
 
 		expect(authorizationCode.length).toBeGreaterThan(0)
@@ -341,7 +355,7 @@ describe('End-to-End OAuth Flow', () => {
 		})
 		let loginRes = await app.fetch(loginReq)
 
-		let callbackUrl = getLocationUrl(loginRes)
+		let callbackUrl = await getRedirectUrlFromHtml(loginRes)
 		let authorizationCode = getAuthorizationCode(callbackUrl)
 
 		// Exchange code for tokens
@@ -408,7 +422,7 @@ describe('End-to-End OAuth Flow', () => {
 		})
 		let loginRes = await app.fetch(loginReq)
 
-		let callbackUrl = getLocationUrl(loginRes)
+		let callbackUrl = await getRedirectUrlFromHtml(loginRes)
 		let authorizationCode = getAuthorizationCode(callbackUrl)
 
 		// First token exchange should succeed

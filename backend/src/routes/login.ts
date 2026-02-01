@@ -224,7 +224,7 @@ function getUserFriendlyErrorMessage(error: string): string {
 	return error
 }
 
-export let createLoginRoutes = (supabaseClient: SupabaseClient): Hono => {
+export let createLoginRoutes = (supabaseClient: SupabaseClient, supabaseServiceClient?: SupabaseClient): Hono => {
 	let app = new Hono()
 
 	// GET /login - Display login page
@@ -324,6 +324,46 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient): Hono => {
 				})
 			)
 		}
+
+		// Check if session was returned (won't be if email confirmation is required)
+		if (!session) {
+			return c.html(
+				renderLoginPage({
+					client_id,
+					redirect_uri,
+					response_type: 'code',
+					state,
+					code_challenge,
+					code_challenge_method,
+					error: mode === 'signup'
+						? 'Please check your email to confirm your account, then sign in.'
+						: 'Unable to create session. Please try again or contact support.',
+					mode,
+				})
+			)
+		}
+
+		// Create matchmaker record on signup (or ensure it exists on signin)
+		if (supabaseServiceClient) {
+			// Use upsert to handle both signup and signin - creates if doesn't exist
+			let { error: matchmakerError } = await supabaseServiceClient
+				.from('matchmakers')
+				.upsert(
+					{
+						id: user.id,
+						name: email.split('@')[0], // Use email prefix as default name
+					},
+					{ onConflict: 'id' }
+				)
+
+			if (matchmakerError) {
+				console.error('[Login] Failed to create matchmaker:', matchmakerError.message)
+				// Don't block login if matchmaker creation fails, but log it
+			} else {
+				console.log('[Login] Matchmaker record ensured for user:', user.id.substring(0, 8) + '...')
+			}
+		}
+
 		let authorizationCode = storeAuthorizationCode({
 			userId: user.id,
 			clientId: client_id,
@@ -341,7 +381,62 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient): Hono => {
 		redirectUrl.searchParams.set('code', authorizationCode)
 		redirectUrl.searchParams.set('state', state)
 
-		return c.redirect(redirectUrl.toString(), 302)
+		// Show brief success message before redirecting
+		return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Success - Matchmaker</title>
+	<style>
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 0;
+		}
+		.card {
+			background: white;
+			border-radius: 12px;
+			padding: 2rem;
+			text-align: center;
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+		}
+		.checkmark {
+			width: 60px;
+			height: 60px;
+			background: #10b981;
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 0 auto 1rem;
+		}
+		.checkmark svg {
+			width: 30px;
+			height: 30px;
+			fill: white;
+		}
+		h1 { color: #1a1a2e; margin-bottom: 0.5rem; }
+		p { color: #666; }
+	</style>
+</head>
+<body>
+	<div class="card">
+		<div class="checkmark">
+			<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+		</div>
+		<h1>Success!</h1>
+		<p>Redirecting to Claude...</p>
+	</div>
+	<script>
+		setTimeout(() => window.location.href = "${redirectUrl.toString()}", 1000);
+	</script>
+</body>
+</html>`)
 	})
 
 	return app

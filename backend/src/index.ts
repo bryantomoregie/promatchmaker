@@ -38,7 +38,18 @@ app.route('/register', createRegisterRoutes())
 // Note: OAuth routes will be mounted with Supabase client below if available
 
 // Login and OAuth routes (public, for OAuth authentication flow)
-if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+	let supabaseAnonClient = createSupabaseAnonClient({
+		url: process.env.SUPABASE_URL,
+		anonKey: process.env.SUPABASE_ANON_KEY,
+	})
+	let supabaseServiceClient = createSupabaseClient({
+		url: process.env.SUPABASE_URL,
+		serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+	})
+	app.route('/login', createLoginRoutes(supabaseAnonClient, supabaseServiceClient))
+	app.route('/oauth', createOAuthRoutes(supabaseAnonClient))
+} else if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
 	let supabaseAnonClient = createSupabaseAnonClient({
 		url: process.env.SUPABASE_URL,
 		anonKey: process.env.SUPABASE_ANON_KEY,

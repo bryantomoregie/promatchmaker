@@ -105,11 +105,15 @@ describe('POST /login (Sign In)', () => {
 
 		let res = await app.fetch(req)
 
-		expect(res.status).toBe(302)
-		let location = res.headers.get('Location')
-		expect(location).toContain('http://example.com/callback')
-		expect(location).toContain('code=')
-		expect(location).toContain('state=abc123')
+		// Success page is returned with JavaScript redirect
+		expect(res.status).toBe(200)
+		let html = await res.text()
+		expect(html).toContain('Success!')
+		expect(html).toContain('Redirecting to Claude...')
+		// The redirect URL should be in the JavaScript
+		expect(html).toContain('http://example.com/callback')
+		expect(html).toContain('code=')
+		expect(html).toContain('state=abc123')
 	})
 
 	test('should return error for invalid credentials', async () => {
@@ -206,11 +210,15 @@ describe('POST /login (Sign Up)', () => {
 
 		let res = await app.fetch(req)
 
-		expect(res.status).toBe(302)
-		let location = res.headers.get('Location')
-		expect(location).toContain('http://example.com/callback')
-		expect(location).toContain('code=')
-		expect(location).toContain('state=xyz789')
+		// Success page is returned with JavaScript redirect
+		expect(res.status).toBe(200)
+		let html = await res.text()
+		expect(html).toContain('Success!')
+		expect(html).toContain('Redirecting to Claude...')
+		// The redirect URL should be in the JavaScript
+		expect(html).toContain('http://example.com/callback')
+		expect(html).toContain('code=')
+		expect(html).toContain('state=xyz789')
 	})
 
 	test('should return user-friendly error when email already exists and suggest signing in', async () => {
