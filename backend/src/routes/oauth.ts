@@ -79,17 +79,27 @@ async function handleAuthorizationCodeGrant(
 	let parseResult = authorizationCodeGrantSchema.safeParse(body)
 	if (!parseResult.success) {
 		let firstError = parseResult.error.errors[0]
+		console.error('[OAuth Token] Validation failed:', firstError?.message)
 		return oauthError(c, 'invalid_request', firstError?.message || 'Invalid request')
 	}
 
 	let { code, redirect_uri: redirectUri, client_id: clientId, code_verifier: codeVerifier } =
 		parseResult.data
 
+	console.log('[OAuth Token] Attempting code exchange:', {
+		codePrefix: code.substring(0, 8) + '...',
+		clientId: clientId.substring(0, 8) + '...',
+		redirectUri
+	})
+
 	// Retrieve and remove authorization code (single use)
 	let codeData = getAndRemoveAuthorizationCode(code)
 	if (!codeData) {
+		console.error('[OAuth Token] Authorization code not found or expired')
 		return oauthError(c, 'invalid_grant', 'Authorization code is invalid or expired')
 	}
+
+	console.log('[OAuth Token] Code found, validating...')
 
 	// Validate redirect_uri matches
 	if (codeData.redirectUri !== redirectUri) {

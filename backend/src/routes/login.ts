@@ -306,6 +306,10 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient): Hono => {
 		// Generate and store authorization code with session tokens and PKCE challenge
 		let session = authResult.data.session
 		let user = authResult.data.user
+
+		console.log('[Login] Auth successful for user:', user?.id?.substring(0, 8) + '...')
+		console.log('[Login] Session obtained:', !!session)
+
 		if (!user) {
 			return c.html(
 				renderLoginPage({
@@ -328,6 +332,9 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient): Hono => {
 			accessToken: session?.access_token || '',
 			refreshToken: session?.refresh_token || '',
 		})
+
+		console.log('[Login] Authorization code generated:', authorizationCode.substring(0, 8) + '...')
+		console.log('[Login] Redirecting to:', redirect_uri)
 
 		// Build redirect URL with authorization code
 		let redirectUrl = new URL(redirect_uri)

@@ -28,12 +28,15 @@ export function storeAuthorizationCode(data: Omit<AuthorizationCodeData, 'create
 		...data,
 		createdAt: Date.now(),
 	})
+	console.log('[AuthCodeStore] Stored code:', code.substring(0, 8) + '...', 'Total codes:', authCodes.size)
 	return code
 }
 
 export function getAndRemoveAuthorizationCode(code: string): AuthorizationCodeData | null {
+	console.log('[AuthCodeStore] Looking for code:', code.substring(0, 8) + '...', 'Available codes:', authCodes.size)
 	let data = authCodes.get(code)
 	if (!data) {
+		console.log('[AuthCodeStore] Code NOT FOUND')
 		return null
 	}
 
@@ -42,9 +45,11 @@ export function getAndRemoveAuthorizationCode(code: string): AuthorizationCodeDa
 
 	// Check if expired
 	if (Date.now() - data.createdAt > CODE_EXPIRY_MS) {
+		console.log('[AuthCodeStore] Code EXPIRED')
 		return null
 	}
 
+	console.log('[AuthCodeStore] Code found and valid')
 	return data
 }
 
