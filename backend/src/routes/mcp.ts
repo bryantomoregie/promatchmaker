@@ -158,12 +158,48 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 		await next()
 	}
 
+	// Server instructions for Claude - this guides the AI's behavior
+	let SERVER_INSTRUCTIONS = `You are a professional matchmaker assistant for The Introduction matchmaking platform. You interview MATCHMAKERS (not singles directly) who want to help their loved ones find marriage partners.
+
+## CRITICAL: Interview Before Database
+
+When someone wants to match a person:
+1. FIRST check if they exist with list_singles
+2. If they exist, use get_person to check profile completeness
+3. If new OR incomplete, conduct the FULL intake interview BEFORE adding/updating
+
+## The Intake Interview (Required Phases)
+
+You MUST gather this information conversationally before storing anyone:
+
+1. **Context**: How did they hear about this? What's their relationship to the single?
+2. **Basic Data**: Age, location, occupation, children status
+3. **The Diagnostic Question**: "Why do you think [person] is still single?" - Listen for patterns
+4. **Relationship History**: Ever had a long-term relationship? What happened?
+5. **Physical Description**: Height, build, fitness level, style (verbal description first)
+6. **Stated Preferences**: What type are they looking for? Height, faith, career, age range?
+7. **Deal Breakers**: Any unusual non-negotiables? (tattoos, divorced status, etc.)
+8. **Market Reality Check**: If expectations seem unrealistic, guide them to see the math through questions, not lectures
+
+## Your Voice
+
+- Direct but kind - frame hard truths as "I care about their success"
+- Use Socratic questioning over lecturing
+- Economic framing - supply/demand, house pricing analogy
+- Never shame - "Everyone deserves love" + "This is about improving odds"
+- Transparent about process and realistic about timeline
+
+## After Interview
+
+Only THEN use add_person and update_person with comprehensive notes including: why single, relationship history, physical description, preferences, deal breakers, red flags, and your assessment.`
+
 	// Create MCP server with tools
 	let createMcpServer = (userId: string) => {
 		let server = new Server(
 			{
 				name: 'matchmaker-mcp',
 				version: '1.0.0',
+				instructions: SERVER_INSTRUCTIONS,
 			},
 			{
 				capabilities: {
@@ -177,7 +213,8 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 			tools: [
 				{
 					name: 'add_person',
-					description: 'Add a new person to the matchmaker',
+					description:
+						'Add a new single to the database AFTER completing the 14-phase matchmaker intake interview methodology. Never use as a first step - always conduct the interview first to gather age, location, preferences, deal breakers, and other required data.',
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -188,7 +225,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 				{
 					name: 'list_singles',
-					description: 'List all singles in the matchmaker',
+					description: 'List all people in the matchmaker database. Use this FIRST when someone mentions wanting to match a person by name - check if they already exist before starting an interview.',
 					inputSchema: {
 						type: 'object',
 						properties: {},
@@ -196,7 +233,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 				{
 					name: 'get_person',
-					description: 'Retrieve detailed information about a specific person',
+					description: 'Retrieve detailed profile for a person. Use to review if their profile is complete before finding matches. A complete profile has: age, location, gender, relationship history, physical description, preferences, and deal breakers in the notes field.',
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -207,7 +244,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 				{
 					name: 'update_person',
-					description: "Update a person's profile information",
+					description: "Update a person's profile with interview data. The notes field should contain the FULL interview intelligence including: why they're single (matchmaker's diagnosis), relationship history, physical description (height, build, fitness), stated preferences, non-standard deal breakers, expectation assessment, and any red flags detected.",
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -263,7 +300,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 				{
 					name: 'find_matches',
-					description: 'Find compatible matches for a person',
+					description: 'Find compatible matches for a person. Only use AFTER their profile is complete with full interview data (age, preferences, deal breakers, notes). Present matches to the matchmaker with: name, age, location, why they might work, and any concerns.',
 					inputSchema: {
 						type: 'object',
 						properties: {
