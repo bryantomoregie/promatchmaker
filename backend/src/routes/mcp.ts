@@ -712,17 +712,16 @@ Profile was already saved incrementally during the interview (\`add_person\` at 
 						.single()
 					if (personError) throw new Error(personError.message)
 
-					// Get active people from OTHER matchmakers (not this user's singles)
-					// This matches the single against the broader pool, not the user's own list
+					// Get all active people except the person we're matching for
+					// Includes both this matchmaker's singles and other matchmakers' singles
 					let { data: candidates, error: candidatesError } = await supabaseClient
 						.from('people')
 						.select('*')
 						.eq('active', true)
 						.neq('id', args.person_id)
-						.neq('matchmaker_id', userId)  // Exclude this user's singles
 					if (candidatesError) throw new Error(candidatesError.message)
 
-					console.log(`[MCP find_matches] Found ${candidates?.length || 0} candidates from other matchmakers for person ${args.person_id}`)
+					console.log(`[MCP find_matches] Found ${candidates?.length || 0} candidates for person ${args.person_id}`)
 
 					// Simple matching - return candidates with compatibility score
 					let matches = (candidates || []).map(candidate => ({
