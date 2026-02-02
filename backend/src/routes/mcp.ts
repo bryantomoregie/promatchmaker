@@ -688,20 +688,22 @@ Explain:
 						.single()
 					if (personError) throw new Error(personError.message)
 
-					// Get all other active people
+					// Get all other active people from the ENTIRE database (not just this matchmaker's)
+					// This allows matching against dummy data and other matchmakers' singles
 					let { data: candidates, error: candidatesError } = await supabaseClient
 						.from('people')
 						.select('*')
-						.eq('matchmaker_id', userId)
 						.eq('active', true)
 						.neq('id', args.person_id)
 					if (candidatesError) throw new Error(candidatesError.message)
 
+					console.log(`[MCP find_matches] Found ${candidates?.length || 0} potential candidates for person ${args.person_id}`)
+
 					// Simple matching - return candidates with compatibility score
 					let matches = (candidates || []).map(candidate => ({
 						person: candidate,
-						compatibility_score: Math.random(), // Placeholder
-						reasons: ['Both are in the matchmaker system'],
+						compatibility_score: Math.random(), // Placeholder - TODO: implement real matching algorithm
+						reasons: ['Both are active singles in the system'],
 					}))
 					return {
 						content: [{ type: 'text', text: JSON.stringify(matches, null, 2) }],
