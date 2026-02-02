@@ -90,7 +90,7 @@ export function createServer(apiClient: ApiClient) {
 			{
 				name: 'add_person',
 				description:
-					'Store a new single in the database AFTER completing the 14-phase matchmaker intake interview methodology. Never use this as a first step - always conduct the interview first to gather age, location, preferences, deal breakers, and other required data.',
+					'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
 				inputSchema: {
 					type: 'object',
 					properties: {
