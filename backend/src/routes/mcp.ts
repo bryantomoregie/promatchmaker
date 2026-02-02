@@ -184,14 +184,41 @@ Begin the interview flow when you hear trigger phrases like:
 - Any mention of wanting to help someone find love/marriage
 
 **If a name is mentioned:**
-1. First check if they already exist using \`list_singles\`
-2. If they exist, retrieve their profile with \`get_person\` and assess completeness
-3. If they don't exist OR their profile is incomplete, begin the interview
+1. Check if they exist using \`list_singles\`
+2. If they exist → \`get_person\` to see what info we have → RESUME where we left off (ask about missing fields)
+3. If they don't exist → \`add_person\` with just the name IMMEDIATELY → then start the interview
 
 **If no name is mentioned:**
-1. Ask: "Tell me about the person you're trying to match"
-2. Get their name first, then check the database
-3. Proceed with interview as needed
+1. Ask: "What's the name of the person you're trying to match?"
+2. Once you have the name → \`add_person\` IMMEDIATELY (don't wait for more info)
+3. Then continue the interview, saving as you go
+
+## CRITICAL: Save Progress Incrementally
+
+**People may not finish the interview in one session.** Save after each answer so they can resume later:
+
+1. Get name → \`add_person\` immediately (creates record with just name)
+2. Get age → \`update_person\` with age
+3. Get location → \`update_person\` with location
+4. Get gender → \`update_person\` with gender
+5. Learn anything else → \`update_person\` and APPEND to notes
+
+**When resuming an interview:**
+1. \`get_person\` to see current profile
+2. Check what's filled vs null:
+   - \`age\`: null means ask about age
+   - \`location\`: null means ask about location
+   - \`gender\`: null means ask about gender
+   - \`notes\`: check what sections exist vs missing
+3. Pick up where you left off - don't re-ask what you know
+
+**Building the notes field:**
+Append sections as you learn them. Example progression:
+- After "why single": \`MATCHMAKER: [relation]\\nWHY SINGLE: [diagnosis]\`
+- After history: append \`\\nRELATIONSHIP HISTORY: [details]\`
+- After physical: append \`\\nPHYSICAL: [height, build, style]\`
+- After preferences: append \`\\nPREFERENCES: [what they want]\`
+- After deal breakers: append \`\\nDEAL BREAKERS: [hard nos]\`
 
 ## Interview Flow - CONVERSATIONAL, NOT CLINICAL
 
@@ -282,10 +309,10 @@ Explain:
 
 ## After the Interview
 
-1. Use \`add_person\` to create their profile
-2. Use \`update_person\` to add all the details including comprehensive notes
-3. Use \`find_matches\` to see potential matches
-4. Present matches to the matchmaker conversationally
+Profile was already saved incrementally during the interview (\`add_person\` at name, \`update_person\` after each answer). When the interview is complete:
+
+1. Use \`find_matches\` to see potential matches
+2. Present matches to the matchmaker conversationally
 
 ## Your Voice Throughout
 
@@ -349,7 +376,7 @@ Explain:
 				{
 					name: 'add_person',
 					description:
-						'Add a person ONLY after having a full conversation with the matchmaker. If you have not asked multiple back-and-forth questions about age, location, why they are single, relationship history, physical description, and preferences, DO NOT use this tool yet. Go back and have the conversation first.',
+						'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -360,7 +387,7 @@ Explain:
 				},
 				{
 					name: 'list_singles',
-					description: 'List all people in the matchmaker database. Use this FIRST when someone mentions wanting to match a person by name - check if they already exist before starting an interview.',
+					description: 'List all people you\'ve added. Call this FIRST when someone mentions a name - check if that person already exists. If they exist, get_person to see their profile and RESUME the interview where you left off. If not, add_person to create them.',
 					inputSchema: {
 						type: 'object',
 						properties: {},
@@ -368,7 +395,7 @@ Explain:
 				},
 				{
 					name: 'get_person',
-					description: 'Retrieve detailed profile for a person. Use to review if their profile is complete before finding matches. A complete profile has: age, location, gender, relationship history, physical description, preferences, and deal breakers in the notes field.',
+					description: 'Retrieve a person\'s full profile. Use this when resuming an interview - check what fields are filled (age, location, gender, notes) vs empty/null to know what to ask next. A complete profile has: age, location, gender, and comprehensive notes with relationship history, physical description, preferences, and deal breakers.',
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -379,7 +406,7 @@ Explain:
 				},
 				{
 					name: 'update_person',
-					description: "Update a person's profile with interview data. The notes field should contain the FULL interview intelligence including: why they're single (matchmaker's diagnosis), relationship history, physical description (height, build, fitness), stated preferences, non-standard deal breakers, expectation assessment, and any red flags detected.",
+					description: "Save profile data incrementally as you learn it. Call this AFTER EACH answer to save progress - users may not finish in one session. Add to the notes field as you go: why single, relationship history, physical description, preferences, deal breakers. Each update preserves previous data.",
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -390,7 +417,7 @@ Explain:
 							gender: { type: 'string', description: 'Person gender' },
 							preferences: { type: 'object', description: 'Person preferences' },
 							personality: { type: 'object', description: 'Person personality traits' },
-							notes: { type: 'string', description: 'Notes about the person' },
+							notes: { type: 'string', description: 'Append interview intelligence here incrementally' },
 						},
 						required: ['id'],
 					},
