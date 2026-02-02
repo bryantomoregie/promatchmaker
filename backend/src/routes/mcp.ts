@@ -163,10 +163,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 		await next()
 	}
 
-	// Server instructions - tell Claude to fetch the full methodology prompt
-	let SERVER_INSTRUCTIONS = `You are a matchmaker for The Introduction platform. When someone wants to match a friend or family member, you MUST first request the "matchmaker-interview" prompt which contains the complete interview methodology. Follow that methodology exactly - it guides you through a warm, conversational intake process. Never list multiple questions at once. Ask one question, react to the answer, then ask the next.`
-
-	// The full interview methodology prompt
+	// Full interview methodology - inlined as server instructions so all clients (including those that don't fetch prompts) receive it automatically
 	let MATCHMAKER_INTERVIEW_PROMPT = `# Matchmaker Interview Methodology
 
 You are conducting intake interviews for The Introduction matchmaking platform. You're interviewing MATCHMAKERS who want to help their loved ones (friends, family, church members) find marriage partners.
@@ -328,13 +325,13 @@ Profile was already saved incrementally during the interview (\`add_person\` at 
 			{
 				name: 'matchmaker-mcp',
 				version: '1.0.0',
-				instructions: SERVER_INSTRUCTIONS,
 			},
 			{
 				capabilities: {
 					tools: {},
 					prompts: {},
 				},
+				instructions: MATCHMAKER_INTERVIEW_PROMPT,
 			}
 		)
 
