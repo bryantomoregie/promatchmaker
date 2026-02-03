@@ -1,3 +1,7 @@
+import type { GetPromptResult, PromptMessage } from '@modelcontextprotocol/sdk/types.js'
+
+export type { GetPromptResult, PromptMessage }
+
 export const INTAKE_QUESTIONNAIRE_NAME = 'intake_questionnaire'
 
 export interface Prompt {
@@ -10,18 +14,6 @@ export interface Prompt {
 	}>
 }
 
-export interface PromptMessage {
-	role: 'user' | 'assistant'
-	content: {
-		type: 'text'
-		text: string
-	}
-}
-
-export interface GetPromptResult {
-	messages: PromptMessage[]
-}
-
 export const prompts: Prompt[] = [
 	{
 		name: INTAKE_QUESTIONNAIRE_NAME,
@@ -30,7 +22,7 @@ export const prompts: Prompt[] = [
 	},
 ]
 
-const INTAKE_QUESTIONNAIRE_TEXT = `Please gather the following information about the new single:
+export const INTAKE_QUESTIONNAIRE_TEXT = `Please gather the following information about the new single:
 
 ## Basics
 1. **Name**: What is your full name?

@@ -4,8 +4,14 @@ import { cors } from 'hono/cors'
 import { HTTPException } from 'hono/http-exception'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import {
+	CallToolRequestSchema,
+	ListToolsRequestSchema,
+	ListPromptsRequestSchema,
+	GetPromptRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js'
 import type { SupabaseClient } from '../lib/supabase'
+import { prompts, getPrompt } from '../../../mcp-server/src/prompts'
 
 type Env = {
 	Variables: {
@@ -168,6 +174,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 			{
 				capabilities: {
 					tools: {},
+					prompts: {},
 				},
 			}
 		)
@@ -341,6 +348,16 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 			],
 		}))
+
+		// Register prompts
+		server.setRequestHandler(ListPromptsRequestSchema, async () => ({
+			prompts,
+		}))
+
+		server.setRequestHandler(GetPromptRequestSchema, async request => {
+			let { name } = request.params
+			return getPrompt(name)
+		})
 
 		// Handle tool calls by making direct database calls
 		server.setRequestHandler(CallToolRequestSchema, async request => {

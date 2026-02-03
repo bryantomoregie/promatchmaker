@@ -361,6 +361,158 @@ describe('MCP Routes', () => {
 		})
 	})
 
+	describe('Prompts', () => {
+		describe('prompts/list', () => {
+			test('returns the intake questionnaire prompt', async () => {
+				let req = new Request('http://localhost/mcp', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Accept: 'application/json, text/event-stream',
+						Authorization: 'Bearer valid-token',
+					},
+					body: JSON.stringify({
+						jsonrpc: '2.0',
+						method: 'prompts/list',
+						params: {},
+						id: 1,
+					}),
+				})
+
+				let res = await app.fetch(req)
+				expect(res.status).toBe(200)
+
+				let body = await res.text()
+				let lines = body.split('\n')
+				let promptsListResult = null
+
+				for (let line of lines) {
+					if (line.startsWith('data:')) {
+						try {
+							let jsonStr = line.slice(5).trim()
+							if (!jsonStr) continue
+							let data = JSON.parse(jsonStr)
+							if (data.result?.prompts) {
+								promptsListResult = data.result
+								break
+							}
+						} catch {
+							// Skip non-JSON lines
+						}
+					}
+				}
+
+				expect(promptsListResult).not.toBeNull()
+				expect(promptsListResult.prompts).toBeArray()
+				expect(promptsListResult.prompts.length).toBeGreaterThan(0)
+
+				let intakePrompt = promptsListResult.prompts.find(
+					(p: { name: string }) => p.name === 'intake_questionnaire'
+				)
+				expect(intakePrompt).toBeDefined()
+				expect(intakePrompt.description).toBeDefined()
+			})
+		})
+
+		describe('prompts/get', () => {
+			test('returns the intake questionnaire content when requested', async () => {
+				let req = new Request('http://localhost/mcp', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Accept: 'application/json, text/event-stream',
+						Authorization: 'Bearer valid-token',
+					},
+					body: JSON.stringify({
+						jsonrpc: '2.0',
+						method: 'prompts/get',
+						params: {
+							name: 'intake_questionnaire',
+						},
+						id: 1,
+					}),
+				})
+
+				let res = await app.fetch(req)
+				expect(res.status).toBe(200)
+
+				let body = await res.text()
+				let lines = body.split('\n')
+				let promptResult = null
+
+				for (let line of lines) {
+					if (line.startsWith('data:')) {
+						try {
+							let jsonStr = line.slice(5).trim()
+							if (!jsonStr) continue
+							let data = JSON.parse(jsonStr)
+							if (data.result?.messages) {
+								promptResult = data.result
+								break
+							}
+						} catch {
+							// Skip non-JSON lines
+						}
+					}
+				}
+
+				expect(promptResult).not.toBeNull()
+				expect(promptResult.messages).toBeArray()
+				expect(promptResult.messages.length).toBeGreaterThan(0)
+
+				// Check the prompt content includes expected text
+				let messageContent = promptResult.messages[0].content
+				expect(messageContent.type).toBe('text')
+				expect(messageContent.text).toContain('following information')
+			})
+
+			test('returns an error for unknown prompt name', async () => {
+				let req = new Request('http://localhost/mcp', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Accept: 'application/json, text/event-stream',
+						Authorization: 'Bearer valid-token',
+					},
+					body: JSON.stringify({
+						jsonrpc: '2.0',
+						method: 'prompts/get',
+						params: {
+							name: 'unknown_prompt',
+						},
+						id: 1,
+					}),
+				})
+
+				let res = await app.fetch(req)
+				expect(res.status).toBe(200) // MCP returns 200 with error in body
+
+				let body = await res.text()
+				let lines = body.split('\n')
+				let errorResult = null
+
+				for (let line of lines) {
+					if (line.startsWith('data:')) {
+						try {
+							let jsonStr = line.slice(5).trim()
+							if (!jsonStr) continue
+							let data = JSON.parse(jsonStr)
+							if (data.error) {
+								errorResult = data.error
+								break
+							}
+						} catch {
+							// Skip non-JSON lines
+						}
+					}
+				}
+
+				expect(errorResult).not.toBeNull()
+				expect(errorResult.message).toContain('unknown_prompt')
+			})
+		})
+	})
+
 	describe('Error logging', () => {
 		test('logError function produces correctly formatted output with timestamp', async () => {
 			// Import the logError function directly to test its format
