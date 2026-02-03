@@ -11,7 +11,7 @@ import {
 	GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import type { SupabaseClient } from '../lib/supabase'
-import { prompts, getPrompt } from '../../../mcp-server/src/prompts'
+import { prompts, getPrompt } from '../prompts'
 
 type Env = {
 	Variables: {
