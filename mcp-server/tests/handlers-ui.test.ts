@@ -98,17 +98,16 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 }
 
 describe('tool handlers emit UI metadata and structuredContent', () => {
-	test('add_single includes UI resource and single profile payload', async () => {
+	test('add_single returns plain result without UI metadata', async () => {
 		let handlers = createToolHandlers(createMockApiClient())
 		let result = await handlers.add_single({ name: 'Avery Chen' })
-		let structured = result.structuredContent as any
 
-		expect(result._meta?.ui?.resourceUri).toBe(UI_RESOURCE_URI)
-		expect(structured?.view).toBe('single_profile')
-		expect(structured?.single?.name).toBe('Avery Chen')
+		expect(result._meta).toBeUndefined()
+		expect(result.structuredContent).toBeUndefined()
+		expect(result.content[0]?.text).toContain('Avery Chen')
 	})
 
-	test('find_matches includes masked match payload', async () => {
+	test('find_matches includes UI resource and masked match payload', async () => {
 		let handlers = createToolHandlers(createMockApiClient())
 		let result = await handlers.find_matches({ person_id: 'person-1' })
 		let structured = result.structuredContent as any

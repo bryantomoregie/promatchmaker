@@ -15,7 +15,6 @@ import {
 } from './tools.js'
 import {
 	buildMatchStructuredContent,
-	buildSingleStructuredContent,
 	UI_RESOURCE_URI,
 } from './ui.js'
 
@@ -56,10 +55,7 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 		add_single: async args => {
 			let validated = validateAddPersonArgs(args)
 			let result = await apiClient.addPerson(validated.name)
-			return successResult(result, {
-				structuredContent: buildSingleStructuredContent(result),
-				includeUi: true,
-			})
+			return successResult(result)
 		},
 
 		list_singles: async () => {
@@ -70,20 +66,14 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 		get_person: async args => {
 			let validated = validateGetPersonArgs(args)
 			let result = await apiClient.getPerson(validated.id)
-			return successResult(result, {
-				structuredContent: buildSingleStructuredContent(result),
-				includeUi: true,
-			})
+			return successResult(result)
 		},
 
 		update_person: async args => {
 			let validated = validateUpdatePersonArgs(args)
 			let { id, ...updates } = validated
 			let result = await apiClient.updatePerson(id, updates)
-			return successResult(result, {
-				structuredContent: buildSingleStructuredContent(result),
-				includeUi: true,
-			})
+			return successResult(result)
 		},
 
 		find_matches: async args => {

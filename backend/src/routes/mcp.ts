@@ -409,7 +409,6 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 			tools: [
 				{
 					name: 'add_single',
-					_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 					description:
 						'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
 					inputSchema: {
@@ -430,7 +429,6 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				},
 				{
 					name: 'get_person',
-					_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 					description: 'Retrieve a person\'s full profile. Use this when resuming an interview - check what fields are filled (age, location, gender, notes) vs empty/null to know what to ask next. A complete profile has: age, location, gender, and comprehensive notes with relationship history, physical description, preferences, and deal breakers.',
 					inputSchema: {
 						type: 'object',
@@ -442,7 +440,6 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				},
 				{
 					name: 'update_person',
-					_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 					description: "Save profile data incrementally as you learn it. Call this AFTER EACH answer to save progress - users may not finish in one session. Add to the notes field as you go: why single, relationship history, physical description, preferences, deal breakers. Each update preserves previous data.",
 					inputSchema: {
 						type: 'object',
@@ -579,22 +576,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 			],
 		}))
 
-		// Structured content builders for discovery UI
-		let buildSingleStructuredContent = (person: Record<string, unknown>) => ({
-			view: 'single_profile',
-			single: {
-				id: person.id,
-				name: person.name,
-				age: person.age ?? null,
-				location: person.location ?? null,
-				gender: person.gender ?? null,
-				preferences: person.preferences ?? null,
-				personality: person.personality ?? null,
-				notes: person.notes ?? null,
-				updated_at: person.updated_at,
-			},
-		})
-
+		// Structured content builder for match results UI
 		let buildMatchStructuredContent = (personId: string, matches: Record<string, unknown>[]) => {
 			let maskName = (name: string): string => {
 				let parts = name.split(/\s+/).filter(Boolean).map(part => {
@@ -674,7 +656,9 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						throw new Error(error.message)
 					}
 					console.log(`[MCP Tool] Person created:`, JSON.stringify(data))
-					return discoveryResult(data, buildSingleStructuredContent(data))
+					return {
+						content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+					}
 				}
 
 				if (name === 'list_singles') {
@@ -700,7 +684,9 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						.eq('matchmaker_id', userId)
 						.single()
 					if (error) throw new Error(error.message)
-					return discoveryResult(data, buildSingleStructuredContent(data))
+					return {
+						content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+					}
 				}
 
 				if (name === 'update_person') {
@@ -716,7 +702,9 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						.select()
 						.single()
 					if (error) throw new Error(error.message)
-					return discoveryResult(data, buildSingleStructuredContent(data))
+					return {
+						content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+					}
 				}
 
 				if (name === 'create_introduction') {

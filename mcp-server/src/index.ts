@@ -126,11 +126,6 @@ export function createServer(apiClient: ApiClient) {
 				name: 'add_single',
 				description:
 					'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
-				_meta: {
-					ui: {
-						resourceUri: UI_RESOURCE_URI,
-					},
-				},
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -142,11 +137,6 @@ export function createServer(apiClient: ApiClient) {
 			{
 				name: 'get_person',
 				description: 'Retrieve detailed profile for an existing person by ID. Use to review a profile or find matching candidates.',
-				_meta: {
-					ui: {
-						resourceUri: UI_RESOURCE_URI,
-					},
-				},
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -158,11 +148,6 @@ export function createServer(apiClient: ApiClient) {
 			{
 				name: 'update_person',
 				description: "Update a person's profile information",
-				_meta: {
-					ui: {
-						resourceUri: UI_RESOURCE_URI,
-					},
-				},
 				inputSchema: {
 					type: 'object',
 					properties: {
