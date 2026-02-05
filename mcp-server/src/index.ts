@@ -5,11 +5,15 @@ import {
 	ListToolsRequestSchema,
 	ListPromptsRequestSchema,
 	GetPromptRequestSchema,
+	ListResourcesRequestSchema,
+	ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import { loadConfig } from './config.js'
 import { ApiClient } from './api.js'
 import { createToolHandlers, isValidToolName } from './handlers.js'
 import { MATCHMAKER_INTERVIEW_PROMPT } from './prompts.js'
+import { UI_RESOURCE_MIME_TYPE, UI_RESOURCE_URI } from './ui.js'
+import { readFile } from 'node:fs/promises'
 
 export function createServer(apiClient: ApiClient) {
 	let server = new Server(
@@ -21,6 +25,7 @@ export function createServer(apiClient: ApiClient) {
 			capabilities: {
 				tools: {},
 				prompts: {},
+				resources: {},
 			},
 		}
 	)
@@ -47,6 +52,36 @@ export function createServer(apiClient: ApiClient) {
 			},
 		],
 	}))
+
+	// Register UI resources for ChatGPT apps
+	server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+		resources: [
+			{
+				name: 'matchmaker-discovery-ui',
+				uri: UI_RESOURCE_URI,
+				description: 'Discovery-only UI for matchmaker intake and masked match previews',
+				mimeType: UI_RESOURCE_MIME_TYPE,
+			},
+		],
+	}))
+
+	server.setRequestHandler(ReadResourceRequestSchema, async request => {
+		let { uri } = request.params
+		if (uri !== UI_RESOURCE_URI) {
+			throw new Error(`Unknown resource URI: ${uri}`)
+		}
+
+		let html = await readFile(new URL('../ui/discovery.html', import.meta.url), 'utf-8')
+		return {
+			contents: [
+				{
+					uri,
+					mimeType: UI_RESOURCE_MIME_TYPE,
+					text: html,
+				},
+			],
+		}
+	})
 
 	server.setRequestHandler(GetPromptRequestSchema, async request => {
 		let { name, arguments: args } = request.params
@@ -91,6 +126,11 @@ export function createServer(apiClient: ApiClient) {
 				name: 'add_person',
 				description:
 					'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
+				_meta: {
+					ui: {
+						resourceUri: UI_RESOURCE_URI,
+					},
+				},
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -100,16 +140,13 @@ export function createServer(apiClient: ApiClient) {
 				},
 			},
 			{
-				name: 'list_singles',
-				description: 'List all singles in the database. Use for admin purposes or to find potential matches after an intake interview is complete.',
-				inputSchema: {
-					type: 'object',
-					properties: {},
-				},
-			},
-			{
 				name: 'get_person',
 				description: 'Retrieve detailed profile for an existing person by ID. Use to review a profile or find matching candidates.',
+				_meta: {
+					ui: {
+						resourceUri: UI_RESOURCE_URI,
+					},
+				},
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -121,6 +158,11 @@ export function createServer(apiClient: ApiClient) {
 			{
 				name: 'update_person',
 				description: "Update a person's profile information",
+				_meta: {
+					ui: {
+						resourceUri: UI_RESOURCE_URI,
+					},
+				},
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -140,114 +182,17 @@ export function createServer(apiClient: ApiClient) {
 				name: 'find_matches',
 				description:
 					'Find compatible matches for a person. Returns a ranked list of potential matches based on preferences, location, age range, and deal breakers. Use this after completing an intake interview to suggest matches to the matchmaker.',
+				_meta: {
+					ui: {
+						resourceUri: UI_RESOURCE_URI,
+					},
+				},
 				inputSchema: {
 					type: 'object',
 					properties: {
 						person_id: { type: 'string', description: 'Person ID (UUID) to find matches for' },
 					},
 					required: ['person_id'],
-				},
-			},
-			{
-				name: 'create_introduction',
-				description: 'Create an introduction between two people',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						person_a_id: { type: 'string', description: 'First person ID (UUID)' },
-						person_b_id: { type: 'string', description: 'Second person ID (UUID)' },
-						notes: { type: 'string', description: 'Notes about the introduction' },
-					},
-					required: ['person_a_id', 'person_b_id'],
-				},
-			},
-			{
-				name: 'list_introductions',
-				description: 'List all introductions for the matchmaker',
-				inputSchema: {
-					type: 'object',
-					properties: {},
-				},
-			},
-			{
-				name: 'update_introduction',
-				description: 'Update introduction status or notes',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						id: { type: 'string', description: 'Introduction ID (UUID)' },
-						status: {
-							type: 'string',
-							enum: ['pending', 'accepted', 'declined', 'dating', 'ended'],
-							description: 'Introduction status',
-						},
-						notes: { type: 'string', description: 'Notes about the introduction' },
-					},
-					required: ['id'],
-				},
-			},
-				{
-				name: 'delete_person',
-				description: 'Soft-delete a person (sets active=false)',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						id: { type: 'string', description: 'Person ID (UUID)' },
-					},
-					required: ['id'],
-				},
-			},
-			{
-				name: 'get_introduction',
-				description: 'Get details of a specific introduction',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						id: { type: 'string', description: 'Introduction ID (UUID)' },
-					},
-					required: ['id'],
-				},
-			},
-			{
-				name: 'submit_feedback',
-				description: 'Submit feedback about an introduction',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						introduction_id: { type: 'string', description: 'Introduction ID (UUID)' },
-						from_person_id: {
-							type: 'string',
-							description: 'Person ID (UUID) submitting the feedback',
-						},
-						content: { type: 'string', description: 'Feedback content' },
-						sentiment: {
-							type: 'string',
-							description: 'Feedback sentiment (e.g., positive, negative, neutral)',
-						},
-					},
-					required: ['introduction_id', 'from_person_id', 'content'],
-				},
-			},
-			{
-				name: 'list_feedback',
-				description: 'Get all feedback for a specific introduction',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						introduction_id: { type: 'string', description: 'Introduction ID (UUID)' },
-					},
-					required: ['introduction_id'],
-				},
-			},
-			{
-				name: 'get_feedback',
-				description: 'Get a specific feedback record',
-				inputSchema: {
-					type: 'object',
-					properties: {
-						id: { type: 'string', description: 'Feedback ID (UUID)' },
-					},
-					required: ['id'],
 				},
 			},
 		],

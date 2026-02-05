@@ -641,4 +641,23 @@ describe('MCP Server', () => {
 		expect(result.content).toBe('Great match! We had a wonderful time.')
 		expect(result.sentiment).toBe('positive')
 	})
+
+	test('ListTools returns only discovery tools', async () => {
+		let { createServer } = await import('../src/index')
+		let mockApiClient = createMockApiClient()
+		let server = createServer(mockApiClient)
+
+		let handler = (server as any)._requestHandlers?.get('tools/list')
+		expect(handler).toBeDefined()
+
+		let result = await handler({})
+		let names = result.tools.map((tool: { name: string }) => tool.name)
+
+		expect(names).toEqual([
+			'add_person',
+			'get_person',
+			'update_person',
+			'find_matches',
+		])
+	})
 })

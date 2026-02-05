@@ -13,18 +13,42 @@ import {
 	validateListFeedbackArgs,
 	validateGetFeedbackArgs,
 } from './tools.js'
+import {
+	buildMatchStructuredContent,
+	buildSingleStructuredContent,
+	UI_RESOURCE_URI,
+} from './ui.js'
 
 type ToolResult = {
 	content: Array<{ type: 'text'; text: string }>
+	structuredContent?: Record<string, unknown>
+	_meta?: Record<string, unknown>
 	isError?: boolean
 }
 
 type ToolHandler = (args: unknown) => Promise<ToolResult>
 
-function successResult(data: unknown): ToolResult {
-	return {
+function successResult(
+	data: unknown,
+	options?: { structuredContent?: Record<string, unknown>; includeUi?: boolean }
+): ToolResult {
+	let result: ToolResult = {
 		content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
 	}
+
+	if (options?.structuredContent) {
+		result.structuredContent = options.structuredContent
+	}
+
+	if (options?.includeUi) {
+		result._meta = {
+			ui: {
+				resourceUri: UI_RESOURCE_URI,
+			},
+		}
+	}
+
+	return result
 }
 
 export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolHandler> {
@@ -32,7 +56,10 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 		add_person: async args => {
 			let validated = validateAddPersonArgs(args)
 			let result = await apiClient.addPerson(validated.name)
-			return successResult(result)
+			return successResult(result, {
+				structuredContent: buildSingleStructuredContent(result),
+				includeUi: true,
+			})
 		},
 
 		list_singles: async () => {
@@ -43,20 +70,29 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 		get_person: async args => {
 			let validated = validateGetPersonArgs(args)
 			let result = await apiClient.getPerson(validated.id)
-			return successResult(result)
+			return successResult(result, {
+				structuredContent: buildSingleStructuredContent(result),
+				includeUi: true,
+			})
 		},
 
 		update_person: async args => {
 			let validated = validateUpdatePersonArgs(args)
 			let { id, ...updates } = validated
 			let result = await apiClient.updatePerson(id, updates)
-			return successResult(result)
+			return successResult(result, {
+				structuredContent: buildSingleStructuredContent(result),
+				includeUi: true,
+			})
 		},
 
 		find_matches: async args => {
 			let validated = validateFindMatchesArgs(args)
 			let result = await apiClient.findMatches(validated.person_id)
-			return successResult(result)
+			return successResult(result, {
+				structuredContent: buildMatchStructuredContent(validated.person_id, result),
+				includeUi: true,
+			})
 		},
 
 		create_introduction: async args => {
