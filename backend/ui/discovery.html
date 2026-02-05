@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Matchmaker Discovery</title>
+		<style>
+			:root {
+				color-scheme: light;
+				--bg: #f7f7f5;
+				--surface: #ffffff;
+				--ink: #1d1d1f;
+				--muted: #6b6b6f;
+				--border: #e3e3e8;
+				--accent: #1d4ed8;
+				--accent-soft: #e8efff;
+				--done: #16a34a;
+				--done-soft: #dcfce7;
+				--warn: #9f1239;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+				background: var(--bg);
+				color: var(--ink);
+			}
+
+			.app {
+				padding: 20px;
+				display: grid;
+				gap: 16px;
+			}
+
+			.header {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			}
+
+			.header h1 {
+				margin: 0;
+				font-size: 18px;
+				letter-spacing: 0.02em;
+			}
+
+			.badge {
+				font-size: 12px;
+				padding: 4px 10px;
+				border-radius: 999px;
+				background: var(--accent-soft);
+				color: var(--accent);
+				font-weight: 600;
+			}
+
+			.grid {
+				display: grid;
+				gap: 16px;
+				grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+			}
+
+			.card {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 16px;
+				box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+			}
+
+			.card h2 {
+				margin: 0 0 8px 0;
+				font-size: 16px;
+			}
+
+			.card p {
+				margin: 4px 0;
+				font-size: 14px;
+				color: var(--muted);
+			}
+
+			.empty {
+				padding: 12px;
+				border: 1px dashed var(--border);
+				border-radius: 12px;
+				color: var(--muted);
+				font-size: 14px;
+			}
+
+			/* Intake Progress */
+			.intake-header {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				margin-bottom: 12px;
+			}
+
+			.intake-name {
+				font-size: 17px;
+				font-weight: 700;
+				color: var(--ink);
+			}
+
+			.intake-fraction {
+				font-size: 13px;
+				color: var(--muted);
+				font-weight: 600;
+			}
+
+			.intake-bar-track {
+				height: 4px;
+				background: var(--border);
+				border-radius: 2px;
+				overflow: hidden;
+				margin-bottom: 12px;
+			}
+
+			.intake-bar-fill {
+				height: 100%;
+				background: var(--done);
+				border-radius: 2px;
+				transition: width 0.3s ease;
+			}
+
+			.intake-list {
+				display: grid;
+				gap: 8px;
+			}
+
+			.intake-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 14px;
+			}
+
+			.intake-row--done {
+				color: var(--ink);
+			}
+
+			.intake-row--pending {
+				color: var(--muted);
+			}
+
+			.intake-icon {
+				flex-shrink: 0;
+				width: 18px;
+				height: 18px;
+			}
+
+			/* Matches */
+			.matches {
+				display: grid;
+				gap: 12px;
+			}
+
+			.match-card {
+				display: grid;
+				grid-template-columns: 64px 1fr;
+				gap: 12px;
+				align-items: center;
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 12px;
+			}
+
+			.blur-photo {
+				position: relative;
+				width: 64px;
+				height: 64px;
+				border-radius: 16px;
+				overflow: hidden;
+				background: #d9d9df;
+				display: grid;
+				place-items: center;
+			}
+
+			.blur-photo__img {
+				position: absolute;
+				inset: -10px;
+				background: linear-gradient(120deg, #a2c4ff, #ffd6a5, #bdb2ff);
+				filter: blur(10px);
+			}
+
+			.blur-photo__label {
+				position: relative;
+				z-index: 1;
+				font-size: 10px;
+				color: #1f2937;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				background: rgba(255, 255, 255, 0.7);
+				padding: 2px 6px;
+				border-radius: 999px;
+			}
+
+			.match-info {
+				display: grid;
+				gap: 4px;
+			}
+
+			.match-title {
+				font-weight: 700;
+				font-size: 15px;
+			}
+
+			.match-meta {
+				font-size: 13px;
+				color: var(--muted);
+			}
+
+			.reasons {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				margin-top: 6px;
+			}
+
+			.reason-pill {
+				font-size: 11px;
+				background: #f0f1f4;
+				color: #374151;
+				padding: 4px 8px;
+				border-radius: 999px;
+			}
+
+			.footer {
+				font-size: 12px;
+				color: var(--muted);
+				text-align: right;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="app">
+			<div class="header">
+				<h1>Discovery Workspace</h1>
+				<span class="badge">ChatGPT Discovery</span>
+			</div>
+
+			<div class="grid">
+				<section class="card" id="intake-card">
+					<h2>Intake Progress</h2>
+					<div class="empty">No single captured yet. Add a name to begin.</div>
+				</section>
+
+				<section class="card" id="matches-card">
+					<h2>Suggested Singles</h2>
+					<div class="empty">Run matching to preview masked suggestions.</div>
+				</section>
+			</div>
+
+			<div class="footer" id="status">Waiting for tool results.</div>
+		</div>
+
+		<script>
+			const ICON_DONE = `<svg class="intake-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" fill="var(--done-soft)" stroke="var(--done)"/><path d="M5.5 9.5L7.5 11.5L12.5 6.5" stroke="var(--done)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+			const ICON_PENDING = `<svg class="intake-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" stroke="var(--border)" stroke-dasharray="3 2"/></svg>`;
+
+			const INTAKE_FIELDS = [
+				{ key: 'name', label: 'Name' },
+				{ key: 'age', label: 'Age' },
+				{ key: 'location', label: 'Location' },
+				{ key: 'gender', label: 'Gender' },
+				{ key: 'preferences', label: 'Preferences' },
+				{ key: 'personality', label: 'Personality' },
+				{ key: 'notes', label: 'Notes' },
+			];
+
+			const state = {
+				single: null,
+				matches: [],
+				lastUpdated: null,
+			};
+
+			function isFieldDone(single, key) {
+				const val = single[key];
+				if (val === null || val === undefined) return false;
+				if (typeof val === 'string') return val.trim().length > 0;
+				if (typeof val === 'object') return Object.keys(val).length > 0;
+				return true;
+			}
+
+			function maskName(name) {
+				if (!name) return 'Single';
+				return name
+					.split(/\s+/)
+					.filter(Boolean)
+					.map(part => {
+						if (part.length <= 1) return '*';
+						return part[0].toUpperCase() + '*'.repeat(part.length - 1);
+					})
+					.join(' ');
+			}
+
+			function maskAge(age) {
+				if (!age || !Number.isFinite(age)) return 'Age hidden';
+				return `${Math.floor(age / 10) * 10}s`;
+			}
+
+			function maskLocation(location) {
+				return 'Location hidden';
+			}
+
+			function setStatus(text) {
+				const status = document.getElementById('status');
+				if (status) status.textContent = text;
+			}
+
+			function renderIntake() {
+				const card = document.getElementById('intake-card');
+				if (!card) return;
+
+				if (!state.single) {
+					card.innerHTML = `
+						<h2>Intake Progress</h2>
+						<div class="empty">No single captured yet. Add a name to begin.</div>
+					`;
+					return;
+				}
+
+				const single = state.single;
+				const doneCount = INTAKE_FIELDS.filter(f => isFieldDone(single, f.key)).length;
+				const total = INTAKE_FIELDS.length;
+				const pct = Math.round((doneCount / total) * 100);
+
+				const rows = INTAKE_FIELDS.map(f => {
+					const done = isFieldDone(single, f.key);
+					return `
+						<div class="intake-row ${done ? 'intake-row--done' : 'intake-row--pending'}">
+							${done ? ICON_DONE : ICON_PENDING}
+							<span>${f.label}</span>
+						</div>
+					`;
+				}).join('');
+
+				card.innerHTML = `
+					<h2>Intake Progress</h2>
+					<div class="intake-header">
+						<span class="intake-name">${single.name || 'Unnamed Single'}</span>
+						<span class="intake-fraction">${doneCount} of ${total}</span>
+					</div>
+					<div class="intake-bar-track">
+						<div class="intake-bar-fill" style="width: ${pct}%"></div>
+					</div>
+					<div class="intake-list">${rows}</div>
+				`;
+			}
+
+			function renderMatches() {
+				const card = document.getElementById('matches-card');
+				if (!card) return;
+
+				if (!state.matches || state.matches.length === 0) {
+					card.innerHTML = `
+						<h2>Suggested Singles</h2>
+						<div class="empty">Run matching to preview masked suggestions.</div>
+					`;
+					return;
+				}
+
+				const matchItems = state.matches
+					.map(match => {
+						const masked = match.masked || {
+							name: maskName(match.person?.name),
+							age: maskAge(match.person?.age),
+							location: maskLocation(match.person?.location),
+						};
+						const reasons = (match.match_reasons || [])
+							.slice(0, 3)
+							.map(reason => `<span class="reason-pill">${reason}</span>`)
+							.join('');
+
+						return `
+							<div class="match-card">
+								<div class="blur-photo" aria-label="Blurred photo">
+									<div class="blur-photo__img"></div>
+									<div class="blur-photo__label">Masked</div>
+								</div>
+								<div class="match-info">
+									<div class="match-title">${masked.name}</div>
+									<div class="match-meta">${masked.age} · ${masked.location}</div>
+									<div class="match-meta">Compatibility: ${formatScore(match.compatibility_score)}</div>
+									<div class="reasons">${reasons}</div>
+								</div>
+							</div>
+						`;
+					})
+					.join('');
+
+				card.innerHTML = `
+					<h2>Suggested Singles</h2>
+					<div class="matches">${matchItems}</div>
+				`;
+			}
+
+			function formatScore(score) {
+				if (score === null || score === undefined) return 'N/A';
+				if (score > 1) return `${score}%`;
+				return `${Math.round(score * 100)}%`;
+			}
+
+			function render() {
+				renderIntake();
+				renderMatches();
+				if (state.lastUpdated) {
+					setStatus(`Last updated ${state.lastUpdated.toLocaleTimeString()}`);
+				}
+			}
+
+			function handleStructuredContent(structuredContent) {
+				if (!structuredContent) return;
+
+				if (structuredContent.single) {
+					state.single = structuredContent.single;
+				}
+
+				if (structuredContent.matches) {
+					state.matches = structuredContent.matches;
+				}
+
+				state.lastUpdated = new Date();
+				render();
+			}
+
+			function handleToolResult(params) {
+				if (!params) return;
+				if (params.structuredContent) {
+					handleStructuredContent(params.structuredContent);
+				}
+			}
+
+			window.addEventListener('message', event => {
+				if (event.source !== window.parent) return;
+				const data = event.data || {};
+				if (data.method === 'ui/notifications/tool-result') {
+					handleToolResult(data.params);
+				}
+				if (data.method === 'ui/initialize') {
+					setStatus('Connected to ChatGPT');
+				}
+			});
+
+			render();
+		</script>
+	</body>
+</html>

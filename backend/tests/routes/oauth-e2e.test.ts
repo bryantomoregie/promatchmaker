@@ -186,7 +186,7 @@ describe('End-to-End OAuth Flow', () => {
 		// Success page is returned with JavaScript redirect
 		expect(loginRes.status).toBe(200)
 		let html = await loginRes.clone().text()
-		expect(html).toContain('Success!')
+		expect(html).toContain("You're all set!")
 		expect(html).toContain('http://localhost:8080/callback')
 		expect(html).toContain('code=')
 		expect(html).toContain(`state=${state}`)

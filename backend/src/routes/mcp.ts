@@ -9,8 +9,14 @@ import {
 	ListToolsRequestSchema,
 	ListPromptsRequestSchema,
 	GetPromptRequestSchema,
+	ListResourcesRequestSchema,
+	ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
+import { readFile } from 'node:fs/promises'
 import type { SupabaseClient } from '../lib/supabase'
+
+let UI_RESOURCE_URI = 'matchmaker-ui://discovery'
+let UI_RESOURCE_MIME_TYPE = 'text/html; profile=mcp-app'
 
 type Env = {
 	Variables: {
@@ -42,11 +48,11 @@ export let logError = (entry: ErrorLogEntry) => {
 export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 	let app = new Hono<Env>()
 
-	// CORS middleware specifically for claude.ai
+	// CORS middleware for AI chat app origins
 	app.use(
 		'*',
 		cors({
-			origin: 'https://claude.ai',
+			origin: ['https://claude.ai', 'https://chatgpt.com', 'https://chat.openai.com'],
 			allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
 			allowHeaders: ['Authorization', 'Content-Type', 'Accept', 'Mcp-Session-Id'],
 			exposeHeaders: ['Mcp-Session-Id'],
@@ -330,6 +336,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				capabilities: {
 					tools: {},
 					prompts: {},
+					resources: {},
 				},
 				instructions: MATCHMAKER_INTERVIEW_PROMPT,
 			}
@@ -367,11 +374,42 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 			throw new Error(`Unknown prompt: ${name}`)
 		})
 
+		// Register UI resources
+		server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+			resources: [
+				{
+					name: 'matchmaker-discovery-ui',
+					uri: UI_RESOURCE_URI,
+					description: 'Discovery-only UI for matchmaker intake and masked match previews',
+					mimeType: UI_RESOURCE_MIME_TYPE,
+				},
+			],
+		}))
+
+		server.setRequestHandler(ReadResourceRequestSchema, async request => {
+			let { uri } = request.params
+			if (uri !== UI_RESOURCE_URI) {
+				throw new Error(`Unknown resource URI: ${uri}`)
+			}
+
+			let html = await readFile(new URL('../../ui/discovery.html', import.meta.url), 'utf-8')
+			return {
+				contents: [
+					{
+						uri,
+						mimeType: UI_RESOURCE_MIME_TYPE,
+						text: html,
+					},
+				],
+			}
+		})
+
 		// Register tools - these tools call the internal API routes
 		server.setRequestHandler(ListToolsRequestSchema, async () => ({
 			tools: [
 				{
 					name: 'add_single',
+					_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 					description:
 						'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
 					inputSchema: {
@@ -392,6 +430,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				},
 				{
 					name: 'get_person',
+					_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 					description: 'Retrieve a person\'s full profile. Use this when resuming an interview - check what fields are filled (age, location, gender, notes) vs empty/null to know what to ask next. A complete profile has: age, location, gender, and comprehensive notes with relationship history, physical description, preferences, and deal breakers.',
 					inputSchema: {
 						type: 'object',
@@ -403,6 +442,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				},
 				{
 					name: 'update_person',
+					_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 					description: "Save profile data incrementally as you learn it. Call this AFTER EACH answer to save progress - users may not finish in one session. Add to the notes field as you go: why single, relationship history, physical description, preferences, deal breakers. Each update preserves previous data.",
 					inputSchema: {
 						type: 'object',
@@ -459,6 +499,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				},
 				{
 					name: 'find_matches',
+					_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 					description: 'Find compatible matches for a person. Only use AFTER their profile is complete with full interview data (age, preferences, deal breakers, notes). Present matches to the matchmaker with: name, age, location, why they might work, and any concerns.',
 					inputSchema: {
 						type: 'object',
@@ -538,6 +579,60 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 			],
 		}))
 
+		// Structured content builders for discovery UI
+		let buildSingleStructuredContent = (person: Record<string, unknown>) => ({
+			view: 'single_profile',
+			single: {
+				id: person.id,
+				name: person.name,
+				age: person.age ?? null,
+				location: person.location ?? null,
+				gender: person.gender ?? null,
+				preferences: person.preferences ?? null,
+				personality: person.personality ?? null,
+				notes: person.notes ?? null,
+				updated_at: person.updated_at,
+			},
+		})
+
+		let buildMatchStructuredContent = (personId: string, matches: Record<string, unknown>[]) => {
+			let maskName = (name: string): string => {
+				let parts = name.split(/\s+/).filter(Boolean).map(part => {
+					if (part.length <= 1) return '*'
+					return `${part[0]?.toUpperCase() ?? '*'}${'*'.repeat(part.length - 1)}`
+				})
+				return parts.length > 0 ? parts.join(' ') : 'Single'
+			}
+			let maskAge = (age?: number | null): string => {
+				if (!age || !Number.isFinite(age)) return 'Age hidden'
+				return `${Math.floor(age / 10) * 10}s`
+			}
+
+			return {
+				view: 'match_results',
+				for_person_id: personId,
+				matches: matches.map(match => {
+					let person = match.person as Record<string, unknown> | undefined
+					return {
+						id: person?.id ?? '',
+						masked: {
+							name: maskName((person?.name as string) ?? 'Single'),
+							age: maskAge(person?.age as number | null),
+							location: 'Location hidden',
+						},
+						compatibility_score: match.compatibility_score ?? null,
+						match_reasons: match.reasons ?? [],
+					}
+				}),
+			}
+		}
+
+		let discoveryResult = (data: unknown, structuredContent: Record<string, unknown>) => ({
+			content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+			structuredContent,
+			_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
+		})
+
 		// Handle tool calls by making direct database calls
 		server.setRequestHandler(CallToolRequestSchema, async request => {
 			let { name, arguments: args } = request.params
@@ -579,9 +674,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						throw new Error(error.message)
 					}
 					console.log(`[MCP Tool] Person created:`, JSON.stringify(data))
-					return {
-						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-					}
+					return discoveryResult(data, buildSingleStructuredContent(data))
 				}
 
 				if (name === 'list_singles') {
@@ -607,9 +700,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						.eq('matchmaker_id', userId)
 						.single()
 					if (error) throw new Error(error.message)
-					return {
-						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-					}
+					return discoveryResult(data, buildSingleStructuredContent(data))
 				}
 
 				if (name === 'update_person') {
@@ -625,9 +716,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						.select()
 						.single()
 					if (error) throw new Error(error.message)
-					return {
-						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-					}
+					return discoveryResult(data, buildSingleStructuredContent(data))
 				}
 
 				if (name === 'create_introduction') {
@@ -729,9 +818,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						compatibility_score: Math.random(), // Placeholder - TODO: implement real matching algorithm
 						reasons: ['Both are active singles in the system'],
 					}))
-					return {
-						content: [{ type: 'text', text: JSON.stringify(matches, null, 2) }],
-					}
+					return discoveryResult(matches, buildMatchStructuredContent(args.person_id as string, matches))
 				}
 
 				if (name === 'delete_person') {
