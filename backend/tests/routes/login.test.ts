@@ -108,8 +108,8 @@ describe('POST /login (Sign In)', () => {
 		// Success page is returned with JavaScript redirect
 		expect(res.status).toBe(200)
 		let html = await res.text()
-		expect(html).toContain('Success!')
-		expect(html).toContain('Redirecting to Claude...')
+		expect(html).toContain("You're all set!")
+		expect(html).toContain('You can close this window and return to your app.')
 		// The redirect URL should be in the JavaScript
 		expect(html).toContain('http://example.com/callback')
 		expect(html).toContain('code=')
@@ -213,8 +213,8 @@ describe('POST /login (Sign Up)', () => {
 		// Success page is returned with JavaScript redirect
 		expect(res.status).toBe(200)
 		let html = await res.text()
-		expect(html).toContain('Success!')
-		expect(html).toContain('Redirecting to Claude...')
+		expect(html).toContain("You're all set!")
+		expect(html).toContain('You can close this window and return to your app.')
 		// The redirect URL should be in the JavaScript
 		expect(html).toContain('http://example.com/callback')
 		expect(html).toContain('code=')

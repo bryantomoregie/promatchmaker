@@ -449,11 +449,11 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient, supabaseServiceC
 		<div class="checkmark">
 			<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
 		</div>
-		<h1>Success!</h1>
-		<p>Redirecting to Claude...</p>
+		<h1>You're all set!</h1>
+		<p>You can close this window and return to your app.</p>
 	</div>
 	<script>
-		setTimeout(() => window.location.href = "${redirectUrl.toString()}", 1000);
+		window.location.href = "${redirectUrl.toString()}";
 	</script>
 </body>
 </html>`)
