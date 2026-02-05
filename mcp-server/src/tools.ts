@@ -2,7 +2,7 @@ import type { PersonPreferences, PersonPersonality } from './api.js'
 
 // Tool name type - all valid tool names
 export type ToolName =
-	| 'add_person'
+	| 'add_single'
 	| 'list_singles'
 	| 'get_person'
 	| 'update_person'
@@ -80,7 +80,7 @@ export type GetFeedbackArgs = {
 
 // Discriminated union for all tool calls
 export type ToolCall =
-	| { name: 'add_person'; args: AddPersonArgs }
+	| { name: 'add_single'; args: AddPersonArgs }
 	| { name: 'list_singles'; args: ListSinglesArgs }
 	| { name: 'get_person'; args: GetPersonArgs }
 	| { name: 'update_person'; args: UpdatePersonArgs }

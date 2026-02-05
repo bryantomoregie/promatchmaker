@@ -183,18 +183,18 @@ Begin the interview flow when you hear trigger phrases like:
 **If a name is mentioned:**
 1. Check if they exist using \`list_singles\`
 2. If they exist → \`get_person\` to see what info we have → RESUME where we left off (ask about missing fields)
-3. If they don't exist → \`add_person\` with just the name IMMEDIATELY → then start the interview
+3. If they don't exist → \`add_single\` with just the name IMMEDIATELY → then start the interview
 
 **If no name is mentioned:**
 1. Ask: "What's the name of the person you're trying to match?"
-2. Once you have the name → \`add_person\` IMMEDIATELY (don't wait for more info)
+2. Once you have the name → \`add_single\` IMMEDIATELY (don't wait for more info)
 3. Then continue the interview, saving as you go
 
 ## CRITICAL: Save Progress Incrementally
 
 **People may not finish the interview in one session.** Save after each answer so they can resume later:
 
-1. Get name → \`add_person\` immediately (creates record with just name)
+1. Get name → \`add_single\` immediately (creates record with just name)
 2. Get age → \`update_person\` with age
 3. Get location → \`update_person\` with location
 4. Get gender → \`update_person\` with gender
@@ -306,7 +306,7 @@ Explain:
 
 ## After the Interview
 
-Profile was already saved incrementally during the interview (\`add_person\` at name, \`update_person\` after each answer). When the interview is complete:
+Profile was already saved incrementally during the interview (\`add_single\` at name, \`update_person\` after each answer). When the interview is complete:
 
 1. Use \`find_matches\` to see potential matches
 2. Present matches to the matchmaker conversationally
@@ -371,7 +371,7 @@ Profile was already saved incrementally during the interview (\`add_person\` at 
 		server.setRequestHandler(ListToolsRequestSchema, async () => ({
 			tools: [
 				{
-					name: 'add_person',
+					name: 'add_single',
 					description:
 						'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
 					inputSchema: {
@@ -384,7 +384,7 @@ Profile was already saved incrementally during the interview (\`add_person\` at 
 				},
 				{
 					name: 'list_singles',
-					description: 'List all people you\'ve added. Call this FIRST when someone mentions a name - check if that person already exists. If they exist, get_person to see their profile and RESUME the interview where you left off. If not, add_person to create them.',
+					description: 'List all people you\'ve added. Call this FIRST when someone mentions a name - check if that person already exists. If they exist, get_person to see their profile and RESUME the interview where you left off. If not, add_single to create them.',
 					inputSchema: {
 						type: 'object',
 						properties: {},
@@ -546,7 +546,7 @@ Profile was already saved incrementally during the interview (\`add_person\` at 
 			console.log(`[MCP Tool] Arguments:`, JSON.stringify(args))
 
 			try {
-				if (name === 'add_person') {
+				if (name === 'add_single') {
 					if (
 						!args ||
 						typeof args !== 'object' ||

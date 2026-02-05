@@ -123,7 +123,7 @@ export function createServer(apiClient: ApiClient) {
 	server.setRequestHandler(ListToolsRequestSchema, async () => ({
 		tools: [
 			{
-				name: 'add_person',
+				name: 'add_single',
 				description:
 					'Add a new person to the matchmaker database. Call this IMMEDIATELY when you learn someone\'s name - do NOT wait for the full interview. Only the name is required. Use update_person later to add details as you learn them.',
 				_meta: {

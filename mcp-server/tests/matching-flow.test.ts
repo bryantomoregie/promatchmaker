@@ -128,7 +128,7 @@ describe('MCP Prompts Capability', () => {
 
 	test('MATCHMAKER_INTERVIEW_PROMPT contains post-interview MCP tool instructions', () => {
 		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('After Interview: Using MCP Tools')
-		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('add_person')
+		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('add_single')
 		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('update_person')
 		expect(MATCHMAKER_INTERVIEW_PROMPT).toContain('find_matches')
 	})
@@ -276,7 +276,7 @@ describe('Matching Flow Evaluation Scenarios', () => {
 		// Expected flow:
 		// 1. Check if Sarah exists (list_singles)
 		// 2. Sarah doesn't exist, start interview
-		// 3. After interview, add_person + update_person
+		// 3. After interview, add_single + update_person
 		// 4. Call find_matches
 		// 5. Present matches
 

@@ -14,6 +14,8 @@
 				--border: #e3e3e8;
 				--accent: #1d4ed8;
 				--accent-soft: #e8efff;
+				--done: #16a34a;
+				--done-soft: #dcfce7;
 				--warn: #9f1239;
 			}
 
@@ -80,25 +82,6 @@
 				color: var(--muted);
 			}
 
-			.single-name {
-				font-size: 20px;
-				font-weight: 700;
-				color: var(--ink);
-				margin-bottom: 8px;
-			}
-
-			.single-fields {
-				display: grid;
-				gap: 6px;
-				font-size: 14px;
-			}
-
-			.label {
-				color: var(--muted);
-				font-weight: 600;
-				margin-right: 6px;
-			}
-
 			.empty {
 				padding: 12px;
 				border: 1px dashed var(--border);
@@ -107,6 +90,68 @@
 				font-size: 14px;
 			}
 
+			/* Intake Progress */
+			.intake-header {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				margin-bottom: 12px;
+			}
+
+			.intake-name {
+				font-size: 17px;
+				font-weight: 700;
+				color: var(--ink);
+			}
+
+			.intake-fraction {
+				font-size: 13px;
+				color: var(--muted);
+				font-weight: 600;
+			}
+
+			.intake-bar-track {
+				height: 4px;
+				background: var(--border);
+				border-radius: 2px;
+				overflow: hidden;
+				margin-bottom: 12px;
+			}
+
+			.intake-bar-fill {
+				height: 100%;
+				background: var(--done);
+				border-radius: 2px;
+				transition: width 0.3s ease;
+			}
+
+			.intake-list {
+				display: grid;
+				gap: 8px;
+			}
+
+			.intake-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 14px;
+			}
+
+			.intake-row--done {
+				color: var(--ink);
+			}
+
+			.intake-row--pending {
+				color: var(--muted);
+			}
+
+			.intake-icon {
+				flex-shrink: 0;
+				width: 18px;
+				height: 18px;
+			}
+
+			/* Matches */
 			.matches {
 				display: grid;
 				gap: 12px;
@@ -197,8 +242,8 @@
 			</div>
 
 			<div class="grid">
-				<section class="card" id="single-card">
-					<h2>Single Being Added</h2>
+				<section class="card" id="intake-card">
+					<h2>Intake Progress</h2>
 					<div class="empty">No single captured yet. Add a name to begin.</div>
 				</section>
 
@@ -212,11 +257,32 @@
 		</div>
 
 		<script>
+			const ICON_DONE = `<svg class="intake-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" fill="var(--done-soft)" stroke="var(--done)"/><path d="M5.5 9.5L7.5 11.5L12.5 6.5" stroke="var(--done)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+			const ICON_PENDING = `<svg class="intake-icon" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" stroke="var(--border)" stroke-dasharray="3 2"/></svg>`;
+
+			const INTAKE_FIELDS = [
+				{ key: 'name', label: 'Name' },
+				{ key: 'age', label: 'Age' },
+				{ key: 'location', label: 'Location' },
+				{ key: 'gender', label: 'Gender' },
+				{ key: 'preferences', label: 'Preferences' },
+				{ key: 'personality', label: 'Personality' },
+				{ key: 'notes', label: 'Notes' },
+			];
+
 			const state = {
 				single: null,
 				matches: [],
 				lastUpdated: null,
 			};
+
+			function isFieldDone(single, key) {
+				const val = single[key];
+				if (val === null || val === undefined) return false;
+				if (typeof val === 'string') return val.trim().length > 0;
+				if (typeof val === 'object') return Object.keys(val).length > 0;
+				return true;
+			}
 
 			function maskName(name) {
 				if (!name) return 'Single';
@@ -236,7 +302,7 @@
 			}
 
 			function maskLocation(location) {
-				return location ? 'Location hidden' : 'Location hidden';
+				return 'Location hidden';
 			}
 
 			function setStatus(text) {
@@ -244,33 +310,43 @@
 				if (status) status.textContent = text;
 			}
 
-			function renderSingle() {
-				const card = document.getElementById('single-card');
+			function renderIntake() {
+				const card = document.getElementById('intake-card');
 				if (!card) return;
 
 				if (!state.single) {
 					card.innerHTML = `
-						<h2>Single Being Added</h2>
+						<h2>Intake Progress</h2>
 						<div class="empty">No single captured yet. Add a name to begin.</div>
 					`;
 					return;
 				}
 
 				const single = state.single;
-				const prefs = single.preferences || {};
-				const personality = single.personality || {};
+				const doneCount = INTAKE_FIELDS.filter(f => isFieldDone(single, f.key)).length;
+				const total = INTAKE_FIELDS.length;
+				const pct = Math.round((doneCount / total) * 100);
+
+				const rows = INTAKE_FIELDS.map(f => {
+					const done = isFieldDone(single, f.key);
+					return `
+						<div class="intake-row ${done ? 'intake-row--done' : 'intake-row--pending'}">
+							${done ? ICON_DONE : ICON_PENDING}
+							<span>${f.label}</span>
+						</div>
+					`;
+				}).join('');
 
 				card.innerHTML = `
-					<h2>Single Being Added</h2>
-					<div class="single-name">${single.name || 'Unnamed Single'}</div>
-					<div class="single-fields">
-						<div><span class="label">Age:</span>${single.age ?? 'Unknown'}</div>
-						<div><span class="label">Location:</span>${single.location ?? 'Unknown'}</div>
-						<div><span class="label">Gender:</span>${single.gender ?? 'Unknown'}</div>
-						<div><span class="label">Preferences:</span>${formatPreferences(prefs)}</div>
-						<div><span class="label">Personality:</span>${formatPersonality(personality)}</div>
-						<div><span class="label">Notes:</span>${single.notes ?? 'None yet'}</div>
+					<h2>Intake Progress</h2>
+					<div class="intake-header">
+						<span class="intake-name">${single.name || 'Unnamed Single'}</span>
+						<span class="intake-fraction">${doneCount} of ${total}</span>
 					</div>
+					<div class="intake-bar-track">
+						<div class="intake-bar-fill" style="width: ${pct}%"></div>
+					</div>
+					<div class="intake-list">${rows}</div>
 				`;
 			}
 
@@ -327,35 +403,8 @@
 				return `${Math.round(score * 100)}%`;
 			}
 
-			function formatPreferences(prefs) {
-				const parts = [];
-				if (prefs.ageRange) {
-					const min = prefs.ageRange.min ?? '?';
-					const max = prefs.ageRange.max ?? '?';
-					parts.push(`Age ${min}-${max}`);
-				}
-				if (Array.isArray(prefs.locations) && prefs.locations.length) {
-					parts.push(`Locations: ${prefs.locations.join(', ')}`);
-				}
-				if (Array.isArray(prefs.genders) && prefs.genders.length) {
-					parts.push(`Genders: ${prefs.genders.join(', ')}`);
-				}
-				return parts.length ? parts.join(' · ') : 'Not captured yet';
-			}
-
-			function formatPersonality(personality) {
-				const parts = [];
-				if (Array.isArray(personality.traits) && personality.traits.length) {
-					parts.push(`Traits: ${personality.traits.join(', ')}`);
-				}
-				if (Array.isArray(personality.interests) && personality.interests.length) {
-					parts.push(`Interests: ${personality.interests.join(', ')}`);
-				}
-				return parts.length ? parts.join(' · ') : 'Not captured yet';
-			}
-
 			function render() {
-				renderSingle();
+				renderIntake();
 				renderMatches();
 				if (state.lastUpdated) {
 					setStatus(`Last updated ${state.lastUpdated.toLocaleTimeString()}`);

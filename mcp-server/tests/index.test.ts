@@ -650,11 +650,11 @@ describe('MCP Server', () => {
 		let handler = (server as any)._requestHandlers?.get('tools/list')
 		expect(handler).toBeDefined()
 
-		let result = await handler({})
+		let result = await handler({ method: 'tools/list' })
 		let names = result.tools.map((tool: { name: string }) => tool.name)
 
 		expect(names).toEqual([
-			'add_person',
+			'add_single',
 			'get_person',
 			'update_person',
 			'find_matches',

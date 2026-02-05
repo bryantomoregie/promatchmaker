@@ -98,9 +98,9 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 }
 
 describe('tool handlers emit UI metadata and structuredContent', () => {
-	test('add_person includes UI resource and single profile payload', async () => {
+	test('add_single includes UI resource and single profile payload', async () => {
 		let handlers = createToolHandlers(createMockApiClient())
-		let result = await handlers.add_person({ name: 'Avery Chen' })
+		let result = await handlers.add_single({ name: 'Avery Chen' })
 		let structured = result.structuredContent as any
 
 		expect(result._meta?.ui?.resourceUri).toBe(UI_RESOURCE_URI)

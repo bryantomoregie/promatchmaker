@@ -53,7 +53,7 @@ function successResult(
 
 export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolHandler> {
 	return {
-		add_person: async args => {
+		add_single: async args => {
 			let validated = validateAddPersonArgs(args)
 			let result = await apiClient.addPerson(validated.name)
 			return successResult(result, {
@@ -156,7 +156,7 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 
 export function isValidToolName(name: string): name is ToolName {
 	let validNames: ToolName[] = [
-		'add_person',
+		'add_single',
 		'list_singles',
 		'get_person',
 		'update_person',

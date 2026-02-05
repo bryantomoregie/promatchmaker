@@ -327,7 +327,7 @@ After gathering all information, use the Pro Matchmaker MCP tools to complete th
 
 ### Scenario A: New Person (not in system yet)
 
-1. Add the person using \`add_person\` with their name
+1. Add the person using \`add_single\` with their name
 2. Update their profile using \`update_person\` with all gathered details:
    - age, gender, location
    - notes field should contain the full interview intelligence (see template below)
