@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Discovery Preview — Local Test Harness</title>
+	<style>
+		* { box-sizing: border-box; margin: 0; }
+		body {
+			font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+			background: #1a1a2e;
+			color: #e0e0e0;
+			height: 100vh;
+			display: flex;
+		}
+
+		/* Left: iframe preview */
+		.preview-pane {
+			flex: 0 0 420px;
+			display: flex;
+			flex-direction: column;
+			border-right: 1px solid #333;
+		}
+		.preview-pane h2 {
+			padding: 12px 16px;
+			font-size: 13px;
+			font-weight: 600;
+			color: #888;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+			border-bottom: 1px solid #333;
+		}
+		.preview-pane iframe {
+			flex: 1;
+			border: none;
+			background: #f7f7f5;
+		}
+
+		/* Right: control panel */
+		.control-pane {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-width: 0;
+		}
+		.control-pane h2 {
+			padding: 12px 16px;
+			font-size: 13px;
+			font-weight: 600;
+			color: #888;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+			border-bottom: 1px solid #333;
+		}
+
+		.controls {
+			padding: 12px 16px;
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			border-bottom: 1px solid #333;
+		}
+		button {
+			padding: 6px 14px;
+			border: 1px solid #555;
+			border-radius: 6px;
+			background: #2a2a4a;
+			color: #e0e0e0;
+			font-size: 12px;
+			cursor: pointer;
+			font-family: inherit;
+		}
+		button:hover { background: #3a3a5a; }
+		button.primary {
+			background: #1d4ed8;
+			border-color: #1d4ed8;
+			color: #fff;
+		}
+		button.primary:hover { background: #2563eb; }
+		button.danger {
+			border-color: #991b1b;
+			color: #fca5a5;
+		}
+		button.danger:hover { background: #991b1b33; }
+
+		.editor {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+		.editor label {
+			padding: 8px 16px 4px;
+			font-size: 11px;
+			color: #888;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+		textarea {
+			flex: 1;
+			margin: 0 16px 8px;
+			padding: 10px;
+			background: #111;
+			color: #c8e6c9;
+			border: 1px solid #333;
+			border-radius: 6px;
+			font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+			font-size: 11px;
+			line-height: 1.5;
+			resize: none;
+			tab-size: 2;
+		}
+		textarea:focus { outline: 1px solid #1d4ed8; border-color: #1d4ed8; }
+
+		.message-log {
+			height: 180px;
+			overflow-y: auto;
+			padding: 8px 16px;
+			font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+			font-size: 10px;
+			line-height: 1.6;
+			color: #888;
+			border-top: 1px solid #333;
+			white-space: pre-wrap;
+			word-break: break-all;
+		}
+		.message-log .sent { color: #93c5fd; }
+		.message-log .recv { color: #86efac; }
+		.message-log .info { color: #fbbf24; }
+	</style>
+</head>
+<body>
+	<!-- Left: iframe preview sized to ChatGPT's typical dimensions -->
+	<div class="preview-pane">
+		<h2>Discovery UI (iframe)</h2>
+		<iframe id="preview" src="../backend/ui/discovery.html"></iframe>
+	</div>
+
+	<!-- Right: controls + JSON editor + message log -->
+	<div class="control-pane">
+		<h2>Control Panel</h2>
+		<div class="controls">
+			<button class="primary" onclick="sendMatches()">Send matches</button>
+			<button onclick="sendSingle()">Send 1 match</button>
+			<button class="danger" onclick="sendReset()">Reset (empty)</button>
+			<button onclick="sendHandshake()">Re-send handshake</button>
+		</div>
+		<div class="editor">
+			<label>structuredContent JSON</label>
+			<textarea id="json-editor"></textarea>
+		</div>
+		<div class="message-log" id="log"></div>
+	</div>
+
+	<script>
+		const iframe = document.getElementById('preview');
+		const editor = document.getElementById('json-editor');
+		const logEl  = document.getElementById('log');
+
+		/* ── Mock data matching buildMatchStructuredContent shape ── */
+		const MOCK_4_MATCHES = {
+			view: 'match_results',
+			for_person_id: 'test-person-1',
+			matches: [
+				{
+					id: 'm1',
+					age: '30s',
+					gender: 'Female',
+					profession: 'Accountant',
+					city: 'Houston',
+					compatibility_score: 0.85,
+					match_reasons: ['Shared faith', 'Similar age']
+				},
+				{
+					id: 'm2',
+					age: '30s',
+					gender: 'Female',
+					profession: 'Teacher',
+					city: 'Houston',
+					compatibility_score: 0.72,
+					match_reasons: ['Same city']
+				},
+				{
+					id: 'm3',
+					age: '20s',
+					gender: 'Female',
+					profession: 'Nurse',
+					city: 'Austin',
+					compatibility_score: 0.65,
+					match_reasons: ['Compatible personality']
+				},
+				{
+					id: 'm4',
+					age: '40s',
+					gender: 'Female',
+					profession: null,
+					city: null,
+					compatibility_score: 0.5,
+					match_reasons: []
+				}
+			]
+		};
+
+		const MOCK_1_MATCH = {
+			view: 'match_results',
+			for_person_id: 'test-person-1',
+			matches: [MOCK_4_MATCHES.matches[0]]
+		};
+
+		const MOCK_EMPTY = {
+			view: 'match_results',
+			for_person_id: 'test-person-1',
+			matches: []
+		};
+
+		/* Populate editor with default mock data */
+		editor.value = JSON.stringify(MOCK_4_MATCHES, null, 2);
+
+		/* ── Logging ── */
+		function log(cls, msg) {
+			const line = document.createElement('div');
+			line.className = cls;
+			line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+			logEl.appendChild(line);
+			logEl.scrollTop = logEl.scrollHeight;
+		}
+
+		/* ── Listen for messages from iframe ── */
+		window.addEventListener('message', (event) => {
+			if (event.source !== iframe.contentWindow) return;
+			log('recv', 'RECV: ' + JSON.stringify(event.data));
+		});
+
+		/* ── Post helpers ── */
+		function postToIframe(msg) {
+			iframe.contentWindow.postMessage(msg, '*');
+			log('sent', 'SENT: ' + JSON.stringify(msg));
+		}
+
+		function sendHandshake() {
+			postToIframe({
+				jsonrpc: '2.0',
+				method: 'ui/initialize',
+				id: 1
+			});
+		}
+
+		function sendToolResult(structuredContent) {
+			postToIframe({
+				method: 'ui/notifications/tool-result',
+				params: { structuredContent }
+			});
+		}
+
+		function sendMatches() {
+			let data;
+			try {
+				data = JSON.parse(editor.value);
+			} catch (e) {
+				log('info', 'JSON parse error: ' + e.message);
+				return;
+			}
+			sendToolResult(data);
+		}
+
+		function sendSingle() {
+			editor.value = JSON.stringify(MOCK_1_MATCH, null, 2);
+			sendToolResult(MOCK_1_MATCH);
+		}
+
+		function sendReset() {
+			editor.value = JSON.stringify(MOCK_EMPTY, null, 2);
+			sendToolResult(MOCK_EMPTY);
+		}
+
+		/* ── Auto-sequence: handshake then send data after iframe loads ── */
+		iframe.addEventListener('load', () => {
+			log('info', 'iframe loaded');
+
+			/* Step 1: handshake */
+			setTimeout(() => {
+				sendHandshake();
+
+				/* Step 2: send mock data after short delay */
+				setTimeout(() => {
+					sendToolResult(MOCK_4_MATCHES);
+				}, 300);
+			}, 200);
+		});
+	</script>
+</body>
+</html>

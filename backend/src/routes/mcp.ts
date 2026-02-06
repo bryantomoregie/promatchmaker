@@ -388,11 +388,14 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 
 		server.setRequestHandler(ReadResourceRequestSchema, async request => {
 			let { uri } = request.params
+			console.log(`[MCP ReadResource] Requested URI: ${uri}`)
 			if (uri !== UI_RESOURCE_URI) {
+				console.log(`[MCP ReadResource] Unknown URI, expected: ${UI_RESOURCE_URI}`)
 				throw new Error(`Unknown resource URI: ${uri}`)
 			}
 
 			let html = await readFile(new URL('../../ui/discovery.html', import.meta.url), 'utf-8')
+			console.log(`[MCP ReadResource] Serving discovery.html (${html.length} bytes)`)
 			return {
 				contents: [
 					{
@@ -405,7 +408,9 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 		})
 
 		// Register tools - these tools call the internal API routes
-		server.setRequestHandler(ListToolsRequestSchema, async () => ({
+		server.setRequestHandler(ListToolsRequestSchema, async () => {
+			console.log(`[MCP ListTools] ChatGPT requested tool list`)
+			let toolList = {
 			tools: [
 				{
 					name: 'add_single',
@@ -574,7 +579,11 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 					},
 				},
 			],
-		}))
+		}
+			let findMatchesTool = toolList.tools.find(t => t.name === 'find_matches')
+			console.log(`[MCP ListTools] find_matches tool _meta: ${JSON.stringify((findMatchesTool as any)?._meta)}`)
+			return toolList
+		})
 
 		// Helpers for structured content
 		let extractCity = (location: string | null | undefined): string | null => {
@@ -613,11 +622,20 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 			}),
 		})
 
-		let discoveryResult = (matchCount: number, structuredContent: Record<string, unknown>) => ({
-			content: [{ type: 'text' as const, text: `Found ${matchCount} potential matches. Review the match cards for details.` }],
-			structuredContent,
-			_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
-		})
+		let discoveryResult = (matchCount: number, structuredContent: Record<string, unknown>) => {
+			let result = {
+				content: [{ type: 'text' as const, text: `Found ${matchCount} potential matches. Review the match cards for details.` }],
+				structuredContent,
+				_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
+			}
+			console.log(`[MCP discoveryResult] matchCount=${matchCount}`)
+			console.log(`[MCP discoveryResult] structuredContent keys: ${Object.keys(structuredContent).join(', ')}`)
+			console.log(`[MCP discoveryResult] structuredContent.matches count: ${(structuredContent as any).matches?.length ?? 'N/A'}`)
+			console.log(`[MCP discoveryResult] _meta.ui.resourceUri: ${result._meta.ui.resourceUri}`)
+			console.log(`[MCP discoveryResult] full response shape: ${JSON.stringify(Object.keys(result))}`)
+			console.log(`[MCP discoveryResult] full response: ${JSON.stringify(result).substring(0, 500)}`)
+			return result
+		}
 
 		// Handle tool calls by making direct database calls
 		server.setRequestHandler(CallToolRequestSchema, async request => {
@@ -776,6 +794,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				}
 
 				if (name === 'find_matches') {
+					console.log(`[MCP find_matches] Called with args: ${JSON.stringify(args)}`)
 					if (
 						!args ||
 						typeof args !== 'object' ||
@@ -791,7 +810,10 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						.eq('id', args.person_id)
 						.eq('matchmaker_id', userId)
 						.single()
-					if (personError) throw new Error(personError.message)
+					if (personError) {
+					console.log(`[MCP find_matches] Person lookup error: ${personError.message}`)
+					throw new Error(personError.message)
+				}
 
 					// Get all active people except the person we're matching for
 					// Includes both this matchmaker's singles and other matchmakers' singles
@@ -800,7 +822,10 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						.select('*')
 						.eq('active', true)
 						.neq('id', args.person_id)
-					if (candidatesError) throw new Error(candidatesError.message)
+					if (candidatesError) {
+					console.log(`[MCP find_matches] Candidates query error: ${candidatesError.message}`)
+					throw new Error(candidatesError.message)
+				}
 
 					console.log(`[MCP find_matches] Found ${candidates?.length || 0} candidates for person ${args.person_id}`)
 
@@ -810,7 +835,15 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						compatibility_score: Math.random(), // Placeholder - TODO: implement real matching algorithm
 						reasons: ['Both are active singles in the system'],
 					}))
-					return discoveryResult(matches.length, buildMatchStructuredContent(args.person_id as string, matches))
+					let sc = buildMatchStructuredContent(args.person_id as string, matches)
+					console.log(`[MCP find_matches] structuredContent.matches count: ${sc.matches.length}`)
+					console.log(`[MCP find_matches] First match sample: ${JSON.stringify(sc.matches[0] ?? null)}`)
+
+					let result = discoveryResult(matches.length, sc)
+					console.log(`[MCP find_matches] Response keys: ${JSON.stringify(Object.keys(result))}`)
+					console.log(`[MCP find_matches] _meta: ${JSON.stringify(result._meta)}`)
+					console.log(`[MCP find_matches] Full response (truncated): ${JSON.stringify(result).substring(0, 800)}`)
+					return result
 				}
 
 				if (name === 'delete_person') {
@@ -940,6 +973,18 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 		let userId = c.get('userId')
 		let path = new URL(c.req.url).pathname
 
+		// Log incoming request
+		let reqBody = await c.req.text()
+		console.log(`[MCP request] ${c.req.method} ${path} userId=${userId}`)
+		console.log(`[MCP request] Body (truncated): ${reqBody.substring(0, 500)}`)
+
+		// Reconstruct the request with the consumed body so transport can read it
+		let reconstructed = new Request(c.req.url, {
+			method: c.req.method,
+			headers: c.req.raw.headers,
+			body: reqBody,
+		})
+
 		// Create transport in stateless mode (no session ID generator)
 		let transport = new WebStandardStreamableHTTPServerTransport({
 			sessionIdGenerator: undefined,
@@ -952,7 +997,16 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 
 		// Handle the request
 		try {
-			let response = await transport.handleRequest(c.req.raw)
+			let response = await transport.handleRequest(reconstructed)
+			// Log the wire response for debugging
+			if (response) {
+				let cloned = response.clone()
+				cloned.text().then(body => {
+					console.log(`[MCP transport] Response status: ${response.status}`)
+					console.log(`[MCP transport] Response content-type: ${response.headers.get('content-type')}`)
+					console.log(`[MCP transport] Response body (truncated): ${body.substring(0, 1000)}`)
+				}).catch(() => {})
+			}
 			return response
 		} catch (error) {
 			let errorType = error instanceof Error ? error.constructor.name : 'UnknownError'
