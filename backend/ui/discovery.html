@@ -157,7 +157,7 @@
 			</div>
 			<div class="status-bar">
 				<div class="status-dot" id="status-dot"></div>
-				<span id="status-text">Waiting for connection</span>
+				<span id="status-text">Initializing bridge...</span>
 			</div>
 			<div class="debug" id="debug"></div>
 		</div>
@@ -165,7 +165,6 @@
 		<script>
 			/* ── State ── */
 			const state = { matches: [] };
-			let connected = false;
 
 			/* ── Debug helpers ── */
 			const debugEl = document.getElementById('debug');
@@ -269,32 +268,50 @@
 				`;
 			}
 
-			/* ── Message handler (MCP Apps protocol) ── */
-			function handleMessage(event) {
+			/* ── JSON-RPC bridge (MCP Apps protocol) ── */
+			let rpcId = 0;
+			const pendingRequests = new Map();
+
+			function rpcNotify(method, params) {
+				window.parent.postMessage({ jsonrpc: '2.0', method, params }, '*');
+			}
+
+			function rpcRequest(method, params) {
+				return new Promise((resolve, reject) => {
+					const id = ++rpcId;
+					pendingRequests.set(id, { resolve, reject });
+					window.parent.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
+				});
+			}
+
+			/* ── Message handler ── */
+			window.addEventListener('message', (event) => {
 				if (event.source !== window.parent) return;
 				const msg = event.data;
-				if (!msg || typeof msg !== 'object') return;
+				if (!msg || msg.jsonrpc !== '2.0') return;
 
-				log('recv: method=' + (msg.method || 'none') + ' id=' + (msg.id ?? 'none'));
+				/* Handle responses to our requests (ui/initialize, tools/call) */
+				if (typeof msg.id === 'number') {
+					const pending = pendingRequests.get(msg.id);
+					if (!pending) return;
+					pendingRequests.delete(msg.id);
 
-				/* ── Handshake: respond to ui/initialize ── */
-				if (msg.jsonrpc === '2.0' && msg.method === 'ui/initialize') {
-					connected = true;
-					setStatus('Connected', true);
-					log('ui/initialize received, responding...');
-
-					if (msg.id !== undefined) {
-						window.parent.postMessage({
-							jsonrpc: '2.0',
-							id: msg.id,
-							result: {}
-						}, '*');
-						log('handshake response sent for id=' + msg.id);
+					if (msg.error) {
+						log('rpc error id=' + msg.id + ': ' + JSON.stringify(msg.error));
+						pending.reject(msg.error);
+						return;
 					}
+
+					log('rpc response id=' + msg.id);
+					pending.resolve(msg.result);
 					return;
 				}
 
-				/* ── Tool results ── */
+				/* Handle notifications from host */
+				if (typeof msg.method !== 'string') return;
+
+				log('recv: method=' + msg.method);
+
 				if (msg.method === 'ui/notifications/tool-result') {
 					const params = msg.params || {};
 					const sc = params.structuredContent;
@@ -310,11 +327,28 @@
 
 					log('no matches array in structuredContent');
 				}
+			}, { passive: true });
+
+			/* ── Initialize the MCP Apps bridge ── */
+			async function initializeBridge() {
+				log('Sending ui/initialize to host...');
+				try {
+					await rpcRequest('ui/initialize', {
+						appInfo: { name: 'matchmaker-discovery', version: '1.0.0' },
+						appCapabilities: {},
+						protocolVersion: '2026-01-26',
+					});
+					rpcNotify('ui/notifications/initialized', {});
+					setStatus('Connected', true);
+					log('Bridge initialized successfully');
+				} catch (error) {
+					log('Bridge init failed: ' + (error?.message || JSON.stringify(error)));
+					setStatus('Connection failed', false);
+				}
 			}
 
-			window.addEventListener('message', handleMessage, { passive: true });
 			render();
-			log('UI loaded, waiting for ui/initialize...');
+			initializeBridge();
 		</script>
 	</body>
 </html>
