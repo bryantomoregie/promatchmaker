@@ -32,7 +32,14 @@ function createMockApiClient(overrides?: Partial<ApiClient>): ApiClient {
 		})),
 		findMatches: mock(async (): Promise<Match[]> => [
 			{
-				person: { id: 'match-1', name: 'Jordan Lee', age: 33, location: 'Austin, TX' },
+				person: {
+					id: 'match-1',
+					name: 'Jordan Lee',
+					age: 33,
+					location: 'Austin, TX',
+					gender: 'female',
+					notes: 'She works as a teacher. Very kind.',
+				},
 				compatibility_score: 0.8,
 				match_reasons: ['Shared interests'],
 			},
@@ -107,13 +114,19 @@ describe('tool handlers emit UI metadata and structuredContent', () => {
 		expect(result.content[0]?.text).toContain('Avery Chen')
 	})
 
-	test('find_matches includes UI resource and masked match payload', async () => {
+	test('find_matches includes UI resource and card data without name', async () => {
 		let handlers = createToolHandlers(createMockApiClient())
 		let result = await handlers.find_matches({ person_id: 'person-1' })
 		let structured = result.structuredContent as any
 
 		expect(result._meta?.ui?.resourceUri).toBe(UI_RESOURCE_URI)
 		expect(structured?.view).toBe('match_results')
-		expect(structured?.matches?.[0]?.masked?.name).toBe('J***** L**')
+
+		let match = structured?.matches?.[0]
+		expect(match).not.toHaveProperty('masked')
+		expect(match?.age).toBe('30s')
+		expect(match?.gender).toBe('female')
+		expect(match?.city).toBe('Austin')
+		expect(match?.profession).toBe('teacher')
 	})
 })

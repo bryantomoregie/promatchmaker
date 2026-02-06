@@ -16,7 +16,7 @@ import { readFile } from 'node:fs/promises'
 import type { SupabaseClient } from '../lib/supabase'
 
 let UI_RESOURCE_URI = 'matchmaker-ui://discovery'
-let UI_RESOURCE_MIME_TYPE = 'text/html; profile=mcp-app'
+let UI_RESOURCE_MIME_TYPE = 'text/html;profile=mcp-app'
 
 type Env = {
 	Variables: {
@@ -576,41 +576,45 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 			],
 		}))
 
-		// Structured content builder for match results UI
-		let buildMatchStructuredContent = (personId: string, matches: Record<string, unknown>[]) => {
-			let maskName = (name: string): string => {
-				let parts = name.split(/\s+/).filter(Boolean).map(part => {
-					if (part.length <= 1) return '*'
-					return `${part[0]?.toUpperCase() ?? '*'}${'*'.repeat(part.length - 1)}`
-				})
-				return parts.length > 0 ? parts.join(' ') : 'Single'
-			}
-			let maskAge = (age?: number | null): string => {
-				if (!age || !Number.isFinite(age)) return 'Age hidden'
-				return `${Math.floor(age / 10) * 10}s`
-			}
-
-			return {
-				view: 'match_results',
-				for_person_id: personId,
-				matches: matches.map(match => {
-					let person = match.person as Record<string, unknown> | undefined
-					return {
-						id: person?.id ?? '',
-						masked: {
-							name: maskName((person?.name as string) ?? 'Single'),
-							age: maskAge(person?.age as number | null),
-							location: 'Location hidden',
-						},
-						compatibility_score: match.compatibility_score ?? null,
-						match_reasons: match.reasons ?? [],
-					}
-				}),
-			}
+		// Helpers for structured content
+		let extractCity = (location: string | null | undefined): string | null => {
+			if (!location || !location.trim()) return null
+			return location.split(',')[0]?.trim() || null
 		}
 
-		let discoveryResult = (data: unknown, structuredContent: Record<string, unknown>) => ({
-			content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
+		let extractProfession = (notes: string | null | undefined): string | null => {
+			if (!notes) return null
+			let m = notes.match(
+				/(?:works as (?:a |an )?|profession:\s*|career:\s*|job:\s*|occupation:\s*)([^,.;\n]+?)(?:\s+and\s|\s+who\s|[,.;\n]|$)/i
+			)
+			return m ? m[1]!.trim() : null
+		}
+
+		let maskAge = (age?: number | null): string | null => {
+			if (!age || !Number.isFinite(age)) return null
+			return `${Math.floor(age / 10) * 10}s`
+		}
+
+		// Structured content builder for match results UI
+		let buildMatchStructuredContent = (personId: string, matches: Record<string, unknown>[]) => ({
+			view: 'match_results',
+			for_person_id: personId,
+			matches: matches.map(match => {
+				let person = match.person as Record<string, unknown> | undefined
+				return {
+					id: person?.id ?? '',
+					age: maskAge(person?.age as number | null),
+					gender: (person?.gender as string | null) ?? null,
+					profession: extractProfession(person?.notes as string | null),
+					city: extractCity(person?.location as string | null),
+					compatibility_score: match.compatibility_score ?? null,
+					match_reasons: match.reasons ?? [],
+				}
+			}),
+		})
+
+		let discoveryResult = (matchCount: number, structuredContent: Record<string, unknown>) => ({
+			content: [{ type: 'text' as const, text: `Found ${matchCount} potential matches. Review the match cards for details.` }],
 			structuredContent,
 			_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
 		})
@@ -806,7 +810,7 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 						compatibility_score: Math.random(), // Placeholder - TODO: implement real matching algorithm
 						reasons: ['Both are active singles in the system'],
 					}))
-					return discoveryResult(matches, buildMatchStructuredContent(args.person_id as string, matches))
+					return discoveryResult(matches.length, buildMatchStructuredContent(args.person_id as string, matches))
 				}
 
 				if (name === 'delete_person') {

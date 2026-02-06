@@ -16,9 +16,7 @@
 				--accent-soft: #eff3ff;
 			}
 
-			* {
-				box-sizing: border-box;
-			}
+			* { box-sizing: border-box; }
 
 			body {
 				margin: 0;
@@ -27,33 +25,20 @@
 				color: var(--ink);
 			}
 
-			.app {
-				padding: 16px 0 16px 16px;
-			}
+			.app { padding: 12px 0 12px 16px; }
 
 			/* Header */
 			.header {
 				display: flex;
 				align-items: center;
 				gap: 8px;
-				margin-bottom: 12px;
+				margin-bottom: 10px;
 				padding-right: 16px;
 			}
+			.header h1 { margin: 0; font-size: 15px; font-weight: 600; }
+			.count { font-size: 12px; color: var(--muted); font-weight: 500; }
 
-			.header h1 {
-				margin: 0;
-				font-size: 15px;
-				font-weight: 600;
-				letter-spacing: -0.01em;
-			}
-
-			.count {
-				font-size: 12px;
-				color: var(--muted);
-				font-weight: 500;
-			}
-
-			/* Horizontal scroll track */
+			/* Horizontal scroll */
 			.scroll-track {
 				display: flex;
 				gap: 12px;
@@ -62,48 +47,43 @@
 				-webkit-overflow-scrolling: touch;
 				padding-bottom: 4px;
 				padding-right: 16px;
+				scrollbar-width: none;
 			}
+			.scroll-track::-webkit-scrollbar { display: none; }
 
-			.scroll-track::-webkit-scrollbar {
-				display: none;
-			}
-
-			/* Match card */
+			/* Card */
 			.match-card {
-				flex: 0 0 180px;
+				flex: 0 0 190px;
 				scroll-snap-align: start;
 				background: var(--surface);
 				border: 1px solid var(--border);
 				border-radius: 14px;
 				overflow: hidden;
-				display: flex;
-				flex-direction: column;
 			}
 
-			/* Blurred photo area */
-			.photo-area {
+			/* Avatar area */
+			.avatar-area {
+				height: 90px;
 				position: relative;
-				height: 100px;
 				overflow: hidden;
 				display: grid;
 				place-items: center;
 			}
-
-			.photo-blur {
+			.avatar-area svg {
 				position: absolute;
-				inset: -20px;
-				filter: blur(18px);
+				inset: 0;
+				width: 100%;
+				height: 100%;
 			}
-
-			.photo-label {
+			.avatar-label {
 				position: relative;
 				z-index: 1;
 				font-size: 9px;
 				font-weight: 600;
-				color: rgba(0, 0, 0, 0.5);
+				color: rgba(0,0,0,0.45);
 				text-transform: uppercase;
 				letter-spacing: 0.1em;
-				background: rgba(255, 255, 255, 0.65);
+				background: rgba(255,255,255,0.6);
 				padding: 3px 8px;
 				border-radius: 999px;
 				backdrop-filter: blur(4px);
@@ -114,44 +94,35 @@
 				padding: 10px 12px 12px;
 				display: flex;
 				flex-direction: column;
-				gap: 4px;
-				flex: 1;
+				gap: 3px;
 			}
-
-			.card-name {
-				font-size: 14px;
-				font-weight: 700;
-				line-height: 1.2;
-			}
-
-			.card-meta {
-				font-size: 12px;
-				color: var(--muted);
+			.card-field {
+				font-size: 13px;
+				color: var(--ink);
 				line-height: 1.3;
 			}
-
-			.card-score {
-				font-size: 11px;
+			.card-field-label {
+				font-size: 10px;
+				color: var(--muted);
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
 				font-weight: 600;
-				color: var(--accent);
 				margin-top: 2px;
 			}
-
 			.card-reasons {
 				display: flex;
 				flex-wrap: wrap;
 				gap: 4px;
 				margin-top: 4px;
 			}
-
 			.reason {
 				font-size: 10px;
 				background: var(--accent-soft);
 				color: var(--accent);
-				padding: 2px 6px;
+				padding: 2px 7px;
 				border-radius: 999px;
-				white-space: nowrap;
 				font-weight: 500;
+				white-space: nowrap;
 			}
 
 			/* Empty state */
@@ -162,14 +133,34 @@
 				font-size: 13px;
 			}
 
-			/* Debug log (hidden by default, enable via console) */
+			/* Status bar */
+			.status-bar {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 6px 16px;
+				font-size: 10px;
+				color: var(--muted);
+			}
+			.status-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: #d1d5db;
+			}
+			.status-dot.ok { background: #22c55e; }
+
+			/* Debug panel — visible during dev, set to display:none for prod */
 			.debug {
-				display: none;
-				padding: 8px 16px;
+				display: block;
+				margin: 8px 16px 0 0;
+				padding: 8px;
 				font-size: 10px;
 				font-family: monospace;
 				color: var(--muted);
-				max-height: 120px;
+				background: rgba(0,0,0,0.03);
+				border-radius: 8px;
+				max-height: 100px;
 				overflow-y: auto;
 				white-space: pre-wrap;
 				word-break: break-all;
@@ -181,26 +172,20 @@
 			<div id="root">
 				<div class="empty">Waiting for match results...</div>
 			</div>
+			<div class="status-bar">
+				<div class="status-dot" id="status-dot"></div>
+				<span id="status-text">Waiting for connection</span>
+			</div>
 			<div class="debug" id="debug"></div>
 		</div>
 
 		<script>
-			/* Color palette for blurred photo backgrounds */
-			const GRADIENTS = [
-				'linear-gradient(135deg, #a2c4ff 0%, #ffd6a5 100%)',
-				'linear-gradient(135deg, #bdb2ff 0%, #ffc6ff 100%)',
-				'linear-gradient(135deg, #caffbf 0%, #9bf6ff 100%)',
-				'linear-gradient(135deg, #ffd6a5 0%, #ff9e9e 100%)',
-				'linear-gradient(135deg, #a0e7e5 0%, #b4f8c8 100%)',
-				'linear-gradient(135deg, #ddd6fe 0%, #fecaca 100%)',
-			];
+			/* ── State ── */
+			const state = { matches: [] };
+			let connected = false;
 
-			const state = {
-				matches: [],
-			};
-
-			let debugEl = document.getElementById('debug');
-
+			/* ── Debug helpers ── */
+			const debugEl = document.getElementById('debug');
 			function log(msg) {
 				if (debugEl) {
 					debugEl.textContent += msg + '\n';
@@ -209,26 +194,45 @@
 				console.log('[MatchUI]', msg);
 			}
 
-			function maskName(name) {
-				if (!name) return 'Single';
-				return name
-					.split(/\s+/)
-					.filter(Boolean)
-					.map(p => (p.length <= 1 ? '*' : p[0].toUpperCase() + '*'.repeat(p.length - 1)))
-					.join(' ');
+			function setStatus(text, ok) {
+				const dot = document.getElementById('status-dot');
+				const label = document.getElementById('status-text');
+				if (dot) dot.className = ok ? 'status-dot ok' : 'status-dot';
+				if (label) label.textContent = text;
 			}
 
-			function maskAge(age) {
-				if (!age || !Number.isFinite(age)) return null;
-				return `${Math.floor(age / 10) * 10}s`;
+			/* ── Deterministic avatar SVG from ID hash ── */
+			function hashCode(str) {
+				let h = 0;
+				for (let i = 0; i < str.length; i++) {
+					h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+				}
+				return Math.abs(h);
 			}
 
-			function formatScore(score) {
-				if (score === null || score === undefined) return null;
-				if (score > 1) return `${Math.round(score)}%`;
-				return `${Math.round(score * 100)}%`;
+			function generateAvatar(id, index) {
+				const h = hashCode(id || String(index));
+				const hue1 = h % 360;
+				const hue2 = (hue1 + 35 + (h >> 8) % 50) % 360;
+				const sat = 55 + (h >> 4) % 20;
+
+				/* 3 blurred circles at pseudo-random positions */
+				const cx1 = 30 + (h % 120), cy1 = 15 + (h >> 3) % 60;
+				const cx2 = 60 + (h >> 5) % 60, cy2 = 30 + (h >> 7) % 40;
+				const cx3 = 20 + (h >> 9) % 140, cy3 = 40 + (h >> 11) % 30;
+
+				return `<svg viewBox="0 0 190 90" xmlns="http://www.w3.org/2000/svg">
+					<defs><filter id="b${index}"><feGaussianBlur stdDeviation="18"/></filter></defs>
+					<rect fill="hsl(${hue1},${sat}%,82%)" width="190" height="90"/>
+					<g filter="url(#b${index})">
+						<circle cx="${cx1}" cy="${cy1}" r="35" fill="hsl(${hue2},${sat}%,75%)" opacity="0.7"/>
+						<circle cx="${cx2}" cy="${cy2}" r="28" fill="hsl(${hue1},${sat + 10}%,70%)" opacity="0.6"/>
+						<circle cx="${cx3}" cy="${cy3}" r="22" fill="hsl(${(hue2 + 60) % 360},${sat}%,78%)" opacity="0.5"/>
+					</g>
+				</svg>`;
 			}
 
+			/* ── Render ── */
 			function render() {
 				const root = document.getElementById('root');
 				if (!root) return;
@@ -239,35 +243,34 @@
 				}
 
 				const cards = state.matches.map((match, i) => {
-					/* Use pre-masked data if available, otherwise mask client-side */
-					const masked = match.masked || {};
-					const name = masked.name || maskName(match.person?.name);
-					const age = masked.age || maskAge(match.person?.age);
-					const location = masked.location || 'Location hidden';
-					const score = formatScore(match.compatibility_score);
+					const age = match.age || null;
+					const gender = match.gender || null;
+					const profession = match.profession || null;
+					const city = match.city || null;
 					const reasons = (match.match_reasons || []).slice(0, 2);
-					const grad = GRADIENTS[i % GRADIENTS.length];
+					const avatar = generateAvatar(match.id, i);
 
-					const metaParts = [age, location].filter(Boolean).join(' \u00B7 ');
+					/* Build field rows — only show fields that have data */
+					let fields = '';
+					if (age) fields += `<div class="card-field">${age}</div>`;
+					if (gender) fields += `<div class="card-field">${gender}</div>`;
+					if (profession) fields += `<div class="card-field">${profession}</div>`;
+					if (city) fields += `<div class="card-field">${city}</div>`;
+
+					if (!fields) fields = '<div class="card-field" style="color:var(--muted)">Profile incomplete</div>';
 
 					const reasonsHtml = reasons.length
 						? `<div class="card-reasons">${reasons.map(r => `<span class="reason">${r}</span>`).join('')}</div>`
 						: '';
 
-					const scoreHtml = score
-						? `<div class="card-score">${score} match</div>`
-						: '';
-
 					return `
 						<div class="match-card">
-							<div class="photo-area">
-								<div class="photo-blur" style="background: ${grad}"></div>
-								<span class="photo-label">Photo hidden</span>
+							<div class="avatar-area">
+								${avatar}
+								<span class="avatar-label">Photo hidden</span>
 							</div>
 							<div class="card-body">
-								<div class="card-name">${name}</div>
-								<div class="card-meta">${metaParts}</div>
-								${scoreHtml}
+								${fields}
 								${reasonsHtml}
 							</div>
 						</div>
@@ -283,32 +286,52 @@
 				`;
 			}
 
+			/* ── Message handler (MCP Apps protocol) ── */
 			function handleMessage(event) {
 				if (event.source !== window.parent) return;
 				const msg = event.data;
 				if (!msg || typeof msg !== 'object') return;
 
-				log('msg: ' + msg.method);
+				log('recv: method=' + (msg.method || 'none') + ' id=' + (msg.id ?? 'none'));
 
+				/* ── Handshake: respond to ui/initialize ── */
+				if (msg.jsonrpc === '2.0' && msg.method === 'ui/initialize') {
+					connected = true;
+					setStatus('Connected', true);
+					log('ui/initialize received, responding...');
+
+					if (msg.id !== undefined) {
+						window.parent.postMessage({
+							jsonrpc: '2.0',
+							id: msg.id,
+							result: {}
+						}, '*');
+						log('handshake response sent for id=' + msg.id);
+					}
+					return;
+				}
+
+				/* ── Tool results ── */
 				if (msg.method === 'ui/notifications/tool-result') {
 					const params = msg.params || {};
 					const sc = params.structuredContent;
 
-					log('structuredContent: ' + JSON.stringify(sc)?.substring(0, 200));
+					log('tool-result sc=' + JSON.stringify(sc)?.substring(0, 300));
 
 					if (sc && sc.matches && Array.isArray(sc.matches)) {
 						state.matches = sc.matches;
+						setStatus('Data received — ' + sc.matches.length + ' matches', true);
 						render();
+						return;
 					}
-				}
 
-				if (msg.method === 'ui/initialize') {
-					log('initialized');
+					log('no matches array in structuredContent');
 				}
 			}
 
 			window.addEventListener('message', handleMessage, { passive: true });
 			render();
+			log('UI loaded, waiting for ui/initialize...');
 		</script>
 	</body>
 </html>

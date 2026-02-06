@@ -3,6 +3,8 @@ import type { Match, Person } from '../src/api'
 import {
 	buildMatchStructuredContent,
 	buildSingleStructuredContent,
+	extractCity,
+	extractProfession,
 	maskAge,
 	maskLocation,
 	maskName,
@@ -24,6 +26,21 @@ describe('UI structured content helpers', () => {
 	test('maskLocation always hides location', () => {
 		expect(maskLocation('Austin, TX')).toBe('Location hidden')
 		expect(maskLocation(null)).toBe('Location hidden')
+	})
+
+	test('extractCity pulls city from "City, State" format', () => {
+		expect(extractCity('Houston, TX')).toBe('Houston')
+		expect(extractCity('Austin')).toBe('Austin')
+		expect(extractCity(null)).toBeNull()
+		expect(extractCity('')).toBeNull()
+	})
+
+	test('extractProfession finds profession in notes text', () => {
+		expect(extractProfession('He works as a medical doctor and loves hiking')).toBe('medical doctor')
+		expect(extractProfession('PROFESSION: Software Engineer\nOther notes')).toBe('Software Engineer')
+		expect(extractProfession('career: accountant, very dedicated')).toBe('accountant')
+		expect(extractProfession('Just some random notes')).toBeNull()
+		expect(extractProfession(null)).toBeNull()
 	})
 
 	test('buildSingleStructuredContent returns single profile payload', () => {
@@ -48,7 +65,7 @@ describe('UI structured content helpers', () => {
 		expect(structured.single.location).toBe('Austin, TX')
 	})
 
-	test('buildMatchStructuredContent masks personal details', () => {
+	test('buildMatchStructuredContent returns card data without name', () => {
 		let matches: Match[] = [
 			{
 				person: {
@@ -56,6 +73,8 @@ describe('UI structured content helpers', () => {
 					name: 'Jordan Lee',
 					age: 33,
 					location: 'Austin, TX',
+					gender: 'female',
+					notes: 'She works as a nurse. Very outgoing.',
 				},
 				compatibility_score: 0.82,
 				match_reasons: ['Shared interests'],
@@ -64,8 +83,40 @@ describe('UI structured content helpers', () => {
 
 		let structured = buildMatchStructuredContent('person-1', matches)
 		expect(structured.view).toBe('match_results')
-		expect(structured.matches[0]?.masked.name).toBe('J***** L**')
-		expect(structured.matches[0]?.masked.location).toBe('Location hidden')
-		expect(structured.matches[0]?.masked.age).toBe('30s')
+
+		let match = structured.matches[0]!
+		// Should NOT have a name field
+		expect(match).not.toHaveProperty('masked')
+		// Should have card display fields
+		expect(match.age).toBe('30s')
+		expect(match.gender).toBe('female')
+		expect(match.profession).toBe('nurse')
+		expect(match.city).toBe('Austin')
+		expect(match.match_reasons).toEqual(['Shared interests'])
+		expect(match.id).toBe('match-1')
+	})
+
+	test('buildMatchStructuredContent handles missing data gracefully', () => {
+		let matches: Match[] = [
+			{
+				person: {
+					id: 'match-2',
+					name: 'Unknown Person',
+					age: null,
+					location: null,
+					gender: null,
+					notes: null,
+				},
+				compatibility_score: 0.5,
+				match_reasons: [],
+			},
+		]
+
+		let structured = buildMatchStructuredContent('person-1', matches)
+		let match = structured.matches[0]!
+		expect(match.age).toBeNull()
+		expect(match.gender).toBeNull()
+		expect(match.profession).toBeNull()
+		expect(match.city).toBeNull()
 	})
 })

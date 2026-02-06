@@ -1,7 +1,7 @@
 import type { Match, Person } from './api.js'
 
 export const UI_RESOURCE_URI = 'matchmaker-ui://discovery'
-export const UI_RESOURCE_MIME_TYPE = 'text/html; profile=mcp-app'
+export const UI_RESOURCE_MIME_TYPE = 'text/html;profile=mcp-app'
 
 export function buildSingleStructuredContent(person: Person) {
 	return {
@@ -24,16 +24,20 @@ export function buildMatchStructuredContent(personId: string, matches: Match[]) 
 	return {
 		view: 'match_results',
 		for_person_id: personId,
-		matches: matches.map(match => ({
-			id: match.person?.id ?? '',
-			masked: {
-				name: maskName(match.person?.name ?? 'Single'),
-				age: maskAge(match.person?.age),
-				location: maskLocation(match.person?.location),
-			},
-			compatibility_score: match.compatibility_score ?? null,
-			match_reasons: match.match_reasons ?? [],
-		})),
+		matches: matches.map(match => {
+			let person = match.person
+			let age = person?.age ? maskAge(person.age) : null
+			let notes = (person as Record<string, unknown> | undefined)?.notes as string | null | undefined
+			return {
+				id: person?.id ?? '',
+				age,
+				gender: (person as Record<string, unknown> | undefined)?.gender as string | null ?? null,
+				profession: extractProfession(notes ?? null),
+				city: extractCity(person?.location ?? null),
+				compatibility_score: match.compatibility_score ?? null,
+				match_reasons: match.match_reasons ?? [],
+			}
+		}),
 	}
 }
 
@@ -58,4 +62,17 @@ export function maskAge(age?: number | null): string {
 export function maskLocation(location?: string | null): string {
 	if (!location) return 'Location hidden'
 	return 'Location hidden'
+}
+
+export function extractCity(location: string | null): string | null {
+	if (!location || !location.trim()) return null
+	return location.split(',')[0]?.trim() || null
+}
+
+export function extractProfession(notes: string | null): string | null {
+	if (!notes) return null
+	let match = notes.match(
+		/(?:works as (?:a |an )?|profession:\s*|career:\s*|job:\s*|occupation:\s*)([^,.;\n]+?)(?:\s+and\s|\s+who\s|[,.;\n]|$)/i
+	)
+	return match ? match[1]!.trim() : null
 }
