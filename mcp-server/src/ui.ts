@@ -1,6 +1,6 @@
 import type { Match, Person } from './api.js'
 
-export const UI_RESOURCE_URI = 'matchmaker-ui://discovery'
+export const UI_RESOURCE_URI = 'ui://matchmaker/discovery.html'
 export const UI_RESOURCE_MIME_TYPE = 'text/html;profile=mcp-app'
 
 export function buildSingleStructuredContent(person: Person) {

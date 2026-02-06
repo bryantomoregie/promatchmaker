@@ -171,6 +171,7 @@ export function createServer(apiClient: ApiClient) {
 					ui: {
 						resourceUri: UI_RESOURCE_URI,
 					},
+					'openai/outputTemplate': UI_RESOURCE_URI,
 				},
 				inputSchema: {
 					type: 'object',

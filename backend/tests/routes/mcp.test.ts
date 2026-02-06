@@ -153,6 +153,56 @@ describe('MCP Routes', () => {
 			let initBody = await initRes.text()
 			expect(initBody).toContain('matchmaker-mcp')
 		})
+
+		test('tools/list includes outputTemplate metadata for find_matches', async () => {
+			let req = new Request('http://localhost/mcp', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json, text/event-stream',
+					Authorization: 'Bearer valid-token',
+				},
+				body: JSON.stringify({
+					jsonrpc: '2.0',
+					method: 'tools/list',
+					params: {},
+					id: 1,
+				}),
+			})
+
+			let res = await app.fetch(req)
+			expect(res.status).toBe(200)
+
+			let body = await res.text()
+			let tools: Array<{ name: string; _meta?: Record<string, unknown> }> | null = null
+
+			for (let line of body.split('\n')) {
+				if (!line.startsWith('data:')) continue
+				let jsonStr = line.slice(5).trim()
+				if (!jsonStr) continue
+				try {
+					let data = JSON.parse(jsonStr)
+					if (Array.isArray(data.result?.tools)) {
+						tools = data.result.tools
+						break
+					}
+				} catch {
+					// Skip non-JSON lines
+				}
+			}
+
+			expect(Array.isArray(tools)).toBe(true)
+			let findMatchesTool = tools?.find(tool => tool.name === 'find_matches')
+			expect(findMatchesTool).toBeTruthy()
+
+			let meta = findMatchesTool?._meta as Record<string, unknown> | undefined
+			expect(meta).toBeTruthy()
+			expect(typeof meta?.['openai/outputTemplate']).toBe('string')
+
+			let ui = meta?.ui as { resourceUri?: string } | undefined
+			expect(typeof ui?.resourceUri).toBe('string')
+			expect(meta?.['openai/outputTemplate']).toBe(ui?.resourceUri)
+		})
 	})
 
 	describe('CORS', () => {

@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { readFile } from 'node:fs/promises'
 import type { SupabaseClient } from '../lib/supabase'
 
-let UI_RESOURCE_URI = 'matchmaker-ui://discovery'
+let UI_RESOURCE_URI = 'ui://matchmaker/discovery.html'
 
 type Env = {
 	Variables: {
@@ -670,7 +670,10 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				inputSchema: {
 					person_id: z.string().describe('Person ID (UUID) to find matches for'),
 				},
-				_meta: { ui: { resourceUri: UI_RESOURCE_URI } },
+				_meta: {
+					ui: { resourceUri: UI_RESOURCE_URI },
+					'openai/outputTemplate': UI_RESOURCE_URI,
+				},
 			},
 			async ({ person_id }) => {
 				console.log(`[MCP Tool] Calling tool: find_matches for userId: ${userId}`)
@@ -706,6 +709,10 @@ Profile was already saved incrementally during the interview (\`add_single\` at 
 				return {
 					content: [{ type: 'text' as const, text: `Found ${matches.length} potential matches. Review the match cards for details.` }],
 					structuredContent: sc,
+					_meta: {
+						ui: { resourceUri: UI_RESOURCE_URI },
+						'openai/outputTemplate': UI_RESOURCE_URI,
+					},
 				}
 			}
 		)

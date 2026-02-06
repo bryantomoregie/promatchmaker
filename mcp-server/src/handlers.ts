@@ -44,6 +44,7 @@ function successResult(
 			ui: {
 				resourceUri: UI_RESOURCE_URI,
 			},
+			'openai/outputTemplate': UI_RESOURCE_URI,
 		}
 	}
 
