@@ -16,8 +16,7 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
 	title: "Matchlight — Human matchmaking, powered by AI",
-	description:
-		"A new kind of matchmaking experience, where a real person finds your match, with AI doing the heavy lifting behind the scenes.",
+	description: "The best introductions come from people who really know you.",
 	keywords: [
 		"matchmaking",
 		"AI-assisted matchmaking",
@@ -33,16 +32,14 @@ export const metadata: Metadata = {
 	},
 	openGraph: {
 		title: "Matchlight — Human matchmaking, powered by AI",
-		description:
-			"A new kind of matchmaking experience, where a real person finds your match, with AI doing the heavy lifting behind the scenes.",
+		description: "The best introductions come from people who really know you.",
 		type: "website",
 		siteName: "Matchlight",
 	},
 	twitter: {
 		card: "summary_large_image",
 		title: "Matchlight — Human matchmaking, powered by AI",
-		description:
-			"A new kind of matchmaking experience, where a real person finds your match, with AI doing the heavy lifting behind the scenes.",
+		description: "The best introductions come from people who really know you.",
 	},
 };
 

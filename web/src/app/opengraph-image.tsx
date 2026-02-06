@@ -101,7 +101,7 @@ export default async function Image() {
 						lineHeight: 1.625,
 					}}
 				>
-					A real person finds your match, with AI behind the scenes
+					The best introductions come from people who really know you.
 				</div>
 			</div>
 		),

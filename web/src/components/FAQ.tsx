@@ -14,6 +14,21 @@ let faqs: FAQItem[] = [
 			"A matchmaking experience where a real person finds your match, with AI doing the heavy lifting behind the scenes.",
 	},
 	{
+		question: "Who is my matchmaker?",
+		answer:
+			"Someone who already knows you - a friend, family member, or anyone in your life who wants to help. You choose who advocates for you.",
+	},
+	{
+		question: "Why do both people get interviewed?",
+		answer:
+			"Because your matchmaker can share things a profile never could: your humor, your values, what you're really like to be around. Two perspectives give us the real picture.",
+	},
+	{
+		question: "What kind of questions do you ask?",
+		answer:
+			"Diagnostic questions that reveal the real story: Why do you think they're single? What would their ex say? What are they like when no one's watching?",
+	},
+	{
 		question: "How is this different from apps?",
 		answer:
 			"Apps hand you a list of strangers and ask you to swipe. Matchlight gives you a matchmaker who knows both people and only introduces you when there's a real reason to.",

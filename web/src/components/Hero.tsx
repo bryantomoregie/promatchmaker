@@ -1,6 +1,7 @@
 "use client";
 
-import { User, Sparkles, MessageSquare, Heart, Cloud, Check, Smartphone } from "lucide-react";
+import { useState } from "react";
+import { User, Sparkles, MessageSquare, Heart, Check, Smartphone } from "lucide-react";
 
 function ClaudeLogo({ className }: { className?: string }) {
 	return (
@@ -20,7 +21,166 @@ function ChatGPTLogo({ className }: { className?: string }) {
 
 import { Button } from "./ui";
 
+type DemoTab = "matchmaker" | "single";
+
+function MatchmakerChatDemo() {
+	return (
+		<div className="space-y-6 bg-gray-50 p-6 dark:bg-gray-900/50 sm:p-8">
+			{/* Matchmaker message 1 */}
+			<div className="space-y-2">
+				<div className="flex items-center justify-end gap-2 text-xs font-medium text-sky-600 dark:text-sky-400">
+					<MessageSquare className="h-3.5 w-3.5" />
+					<span>Matchmaker interview</span>
+				</div>
+				<div className="flex items-start justify-end gap-3">
+					<div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-sky-500 to-sky-600 px-4 py-3 shadow-md sm:max-w-[75%]">
+						<p className="text-sm leading-relaxed text-white sm:text-base">
+							I&apos;m here to help my friend Michael find someone
+						</p>
+					</div>
+					<div className="flex-shrink-0">
+						<div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50">
+							<User className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			{/* AI diagnostic question */}
+			<div className="space-y-2">
+				<div className="flex items-center gap-2 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+					<Heart className="h-3.5 w-3.5" />
+					<span>Diagnostic questions</span>
+				</div>
+				<div className="flex items-start gap-3">
+					<div className="flex-shrink-0">
+						<div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">
+							<Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+						</div>
+					</div>
+					<div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-md dark:bg-gray-800 sm:max-w-[75%]">
+						<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 sm:text-base">
+							Tell me about Michael. Why do you think he&apos;s single?
+						</p>
+					</div>
+				</div>
+			</div>
+
+			{/* Matchmaker response */}
+			<div className="flex items-start justify-end gap-3">
+				<div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-sky-500 to-sky-600 px-4 py-3 shadow-md sm:max-w-[75%]">
+					<p className="text-sm leading-relaxed text-white sm:text-base">
+						He&apos;s selective - in a good way. Takes relationships seriously.
+					</p>
+				</div>
+				<div className="flex-shrink-0">
+					<div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50">
+						<User className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+					</div>
+				</div>
+			</div>
+
+			{/* AI follow-up */}
+			<div className="space-y-2">
+				<div className="flex items-center gap-2 text-xs font-medium text-purple-600 dark:text-purple-400">
+					<Sparkles className="h-3.5 w-3.5" />
+					<span>Understanding the real person</span>
+				</div>
+				<div className="flex items-start gap-3">
+					<div className="flex-shrink-0">
+						<div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">
+							<Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+						</div>
+					</div>
+					<div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-md dark:bg-gray-800 sm:max-w-[75%]">
+						<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 sm:text-base">
+							What would his ex say about him?
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function SingleChatDemo() {
+	return (
+		<div className="space-y-6 bg-gray-50 p-6 dark:bg-gray-900/50 sm:p-8">
+			{/* Single message 1 */}
+			<div className="space-y-2">
+				<div className="flex items-center justify-end gap-2 text-xs font-medium text-sky-600 dark:text-sky-400">
+					<MessageSquare className="h-3.5 w-3.5" />
+					<span>Getting to know you</span>
+				</div>
+				<div className="flex items-start justify-end gap-3">
+					<div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-sky-500 to-sky-600 px-4 py-3 shadow-md sm:max-w-[75%]">
+						<p className="text-sm leading-relaxed text-white sm:text-base">
+							I&apos;m looking for someone to match me
+						</p>
+					</div>
+					<div className="flex-shrink-0">
+						<div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50">
+							<User className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			{/* AI question */}
+			<div className="flex items-start gap-3">
+				<div className="flex-shrink-0">
+					<div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">
+						<Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+					</div>
+				</div>
+				<div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-md dark:bg-gray-800 sm:max-w-[75%]">
+					<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 sm:text-base">
+						Tell me what matters most to you in a partner.
+					</p>
+				</div>
+			</div>
+
+			{/* Single response */}
+			<div className="flex items-start justify-end gap-3">
+				<div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-sky-500 to-sky-600 px-4 py-3 shadow-md sm:max-w-[75%]">
+					<p className="text-sm leading-relaxed text-white sm:text-base">
+						Someone who&apos;s driven but knows how to slow down...
+					</p>
+				</div>
+				<div className="flex-shrink-0">
+					<div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50">
+						<User className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+					</div>
+				</div>
+			</div>
+
+			{/* AI matchmaker perspective */}
+			<div className="space-y-2">
+				<div className="flex items-center gap-2 text-xs font-medium text-purple-600 dark:text-purple-400">
+					<Heart className="h-3.5 w-3.5" />
+					<span>Your matchmaker&apos;s perspective</span>
+				</div>
+				<div className="flex items-start gap-3">
+					<div className="flex-shrink-0">
+						<div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">
+							<Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+						</div>
+					</div>
+					<div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-md dark:bg-gray-800 sm:max-w-[75%]">
+						<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 sm:text-base">
+							Your matchmaker Sarah mentioned you have a dry sense of humor. Would you say
+							that&apos;s accurate?
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
 export function Hero() {
+	let [activeTab, setActiveTab] = useState<DemoTab>("matchmaker");
+
 	let scrollToSection = (id: string) => {
 		let element = document.getElementById(id);
 		if (element) {
@@ -40,8 +200,7 @@ export function Hero() {
 
 					{/* Subheadline */}
 					<p className="mt-8 font-display text-xl font-light leading-relaxed text-gray-600 dark:text-gray-400">
-						A new kind of matchmaking experience, where a real person finds your match, with AI
-						doing the heavy lifting behind the scenes.
+						The best introductions come from people who really know you.
 					</p>
 
 					{/* Platform availability */}
@@ -91,98 +250,36 @@ export function Hero() {
 						</div>
 
 						{/* Chat messages */}
-						<div className="space-y-6 bg-gray-50 p-6 dark:bg-gray-900/50 sm:p-8">
-							{/* User message 1 */}
-							<div className="space-y-2">
-								<div className="flex items-center justify-end gap-2 text-xs font-medium text-sky-600 dark:text-sky-400">
-									<MessageSquare className="h-3.5 w-3.5" />
-									<span>Natural language input</span>
-								</div>
-								<div className="flex items-start justify-end gap-3">
-									<div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-sky-500 to-sky-600 px-4 py-3 shadow-md sm:max-w-[75%]">
-										<p className="text-sm leading-relaxed text-white sm:text-base">
-											Add Sarah to my network. She's 28, loves hiking and photography, works in
-											tech.
-										</p>
-									</div>
-									<div className="flex-shrink-0">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50">
-											<User className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-										</div>
-									</div>
-								</div>
-							</div>
+						{activeTab === "matchmaker" ? <MatchmakerChatDemo /> : <SingleChatDemo />}
+					</div>
 
-							{/* AI response 1 */}
-							<div className="space-y-2">
-								<div className="flex items-center gap-2 text-xs font-medium text-indigo-600 dark:text-indigo-400">
-									<Cloud className="h-3.5 w-3.5" />
-									<span>AI understands context</span>
-								</div>
-								<div className="flex items-start gap-3">
-									<div className="flex-shrink-0">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">
-											<Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-										</div>
-									</div>
-									<div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-md dark:bg-gray-800 sm:max-w-[75%]">
-										<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 sm:text-base">
-											I've added Sarah to your network with the details you provided. Would you like
-											me to suggest any potential matches from your existing connections?
-										</p>
-									</div>
-								</div>
-							</div>
-
-							{/* User message 2 */}
-							<div className="flex items-start justify-end gap-3">
-								<div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-gradient-to-br from-sky-500 to-sky-600 px-4 py-3 shadow-md sm:max-w-[75%]">
-									<p className="text-sm leading-relaxed text-white sm:text-base">
-										Yes, who might be a good match?
-									</p>
-								</div>
-								<div className="flex-shrink-0">
-									<div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50">
-										<User className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-									</div>
-								</div>
-							</div>
-
-							{/* AI suggestion */}
-							<div className="space-y-2">
-								<div className="flex items-center gap-2 text-xs font-medium text-purple-600 dark:text-purple-400">
-									<Heart className="h-3.5 w-3.5" />
-									<span>Smart matching</span>
-								</div>
-								<div className="flex items-start gap-3">
-									<div className="flex-shrink-0">
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">
-											<Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-										</div>
-									</div>
-									<div className="max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-md dark:bg-gray-800 sm:max-w-[75%]">
-										<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 sm:text-base">
-											Based on your notes, Alex (29, outdoor enthusiast, software engineer) shares
-											similar interests with Sarah. They both enjoy hiking and work in tech. Would
-											you like to make this introduction?
-										</p>
-									</div>
-								</div>
-							</div>
-
-							{/* Typing indicator */}
-							<div className="flex justify-end gap-3">
-								<div className="flex items-center space-x-1 rounded-2xl rounded-tr-sm bg-white px-4 py-3 shadow-md dark:bg-gray-800">
-									<div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]"></div>
-									<div className="h-2 w-2 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]"></div>
-									<div className="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
-								</div>
-								<div className="flex-shrink-0">
-									<div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900/50">
-										<User className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-									</div>
-								</div>
-							</div>
+					{/* Tab toggle below chat */}
+					<div className="mt-6 flex justify-center">
+						<div className="flex rounded-lg bg-white p-1 shadow-md ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700" role="tablist">
+							<button
+								role="tab"
+								aria-selected={activeTab === "matchmaker"}
+								onClick={() => setActiveTab("matchmaker")}
+								className={`rounded-md px-5 py-2 text-sm font-medium transition-all ${
+									activeTab === "matchmaker"
+										? "bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-sm"
+										: "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+								}`}
+							>
+								Matchmaker
+							</button>
+							<button
+								role="tab"
+								aria-selected={activeTab === "single"}
+								onClick={() => setActiveTab("single")}
+								className={`rounded-md px-5 py-2 text-sm font-medium transition-all ${
+									activeTab === "single"
+										? "bg-gradient-to-r from-sky-500 to-indigo-500 text-white shadow-sm"
+										: "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+								}`}
+							>
+								Single
+							</button>
 						</div>
 					</div>
 				</div>

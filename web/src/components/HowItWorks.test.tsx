@@ -10,11 +10,11 @@ describe("HowItWorks", () => {
 		).toBeInTheDocument();
 	});
 
-	it("renders the subheadline", () => {
+	it("renders the intro paragraph explaining who matchmaker is", () => {
 		render(<HowItWorks />);
 		expect(
 			screen.getByText(
-				/whether you're ready to be matched or you're the one making the matches/i,
+				/your matchmaker is someone who already knows you/i,
 			),
 		).toBeInTheDocument();
 	});
@@ -29,27 +29,37 @@ describe("HowItWorks", () => {
 		expect(screen.getByText("For matchmakers")).toBeInTheDocument();
 	});
 
-	it("renders all singles steps", () => {
+	it("renders all singles steps with new content", () => {
 		render(<HowItWorks />);
-		expect(screen.getByText("Tell us about yourself")).toBeInTheDocument();
-		expect(screen.getByText("Get matched by a person")).toBeInTheDocument();
-		expect(screen.getByText("Meet with purpose")).toBeInTheDocument();
+		expect(screen.getByText("Choose your matchmaker")).toBeInTheDocument();
+		expect(screen.getByText("You both get interviewed")).toBeInTheDocument();
+		expect(screen.getByText("Meet with context")).toBeInTheDocument();
 	});
 
-	it("renders all matchmaker steps", () => {
+	it("renders all matchmaker steps with new content", () => {
 		render(<HowItWorks />);
-		expect(screen.getByText("Keep notes on everyone")).toBeInTheDocument();
-		expect(screen.getByText("Let AI find what you'd miss")).toBeInTheDocument();
-		expect(screen.getByText("Track what works")).toBeInTheDocument();
+		expect(screen.getByText("Get asked to help")).toBeInTheDocument();
+		expect(screen.getByText("Answer the real questions")).toBeInTheDocument();
+		expect(screen.getByText("Make the introduction")).toBeInTheDocument();
 	});
 
-	it("renders step descriptions", () => {
+	it("renders singles step descriptions", () => {
 		render(<HowItWorks />);
 		expect(
-			screen.getByText(/share what matters to you/i),
+			screen.getByText(/pick a friend or family member who knows you well/i),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText(/matchlight reads your notes and surfaces compatibility/i),
+			screen.getByText(/you share what you're looking for/i),
+		).toBeInTheDocument();
+	});
+
+	it("renders matchmaker step descriptions", () => {
+		render(<HowItWorks />);
+		expect(
+			screen.getByText(/a friend wants you to advocate for them/i),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/why are they single/i),
 		).toBeInTheDocument();
 	});
 });

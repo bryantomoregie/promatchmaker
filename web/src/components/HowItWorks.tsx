@@ -1,36 +1,33 @@
 let singlesSteps = [
 	{
-		title: "Tell us about yourself",
-		description:
-			"Share what matters to you, what you value, and what you're looking for in a partner. Not a profile. A real conversation.",
+		title: "Choose your matchmaker",
+		description: "Pick a friend or family member who knows you well.",
 	},
 	{
-		title: "Get matched by a person",
+		title: "You both get interviewed",
 		description:
-			"A matchmaker reviews your details, uses AI-powered insights, and introduces you to someone when the fit is right.",
+			"You share what you're looking for. They share what you're really like.",
 	},
 	{
-		title: "Meet with purpose",
+		title: "Meet with context",
 		description:
-			"Every introduction comes with a reason. You'll know why your matchmaker believes you two belong in the same room.",
+			"Every introduction comes with a reason your matchmaker can explain.",
 	},
 ];
 
 let matchmakerSteps = [
 	{
-		title: "Keep notes on everyone",
-		description:
-			"Track personalities, preferences, values, and stories for the people in your network.",
+		title: "Get asked to help",
+		description: "A friend wants you to advocate for them.",
 	},
 	{
-		title: "Let AI find what you'd miss",
+		title: "Answer the real questions",
 		description:
-			"Matchlight reads your notes and surfaces compatibility across your whole network. You decide what to act on.",
+			"Why are they single? What would their ex say? What are they like when no one's watching?",
 	},
 	{
-		title: "Track what works",
-		description:
-			"See how your introductions go. Learn from outcomes and get better over time.",
+		title: "Make the introduction",
+		description: "When there's a match, you explain why it makes sense.",
 	},
 ];
 
@@ -43,8 +40,8 @@ export function HowItWorks() {
 						How Matchlight works
 					</h2>
 					<p className="mt-6 font-display text-lg font-light text-gray-600 dark:text-gray-400">
-						Whether you&apos;re ready to be matched or you&apos;re the one making the
-						matches.
+						Your matchmaker is someone who already knows you - a friend, family member, or
+						someone in your circle who wants to help you find your person.
 					</p>
 				</div>
 				<div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-12 sm:mt-20 lg:grid-cols-2 lg:gap-16">
