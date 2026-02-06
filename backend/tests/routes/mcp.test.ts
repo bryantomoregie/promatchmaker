@@ -506,11 +506,12 @@ describe('MCP Routes', () => {
 						if (!jsonStr) continue
 						let data = JSON.parse(jsonStr)
 						// MCP error format: isError: true with content array containing error message
+						// McpServer SDK returns raw error message (no "Error:" prefix)
 						if (data.result?.isError === true && Array.isArray(data.result?.content)) {
 							let textContent = data.result.content.find(
 								(c: { type: string; text?: string }) => c.type === 'text'
 							)
-							if (textContent && textContent.text.startsWith('Error:')) {
+							if (textContent && textContent.text) {
 								hasErrorResponse = true
 								break
 							}
