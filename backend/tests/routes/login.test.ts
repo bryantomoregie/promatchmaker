@@ -213,6 +213,56 @@ describe('POST /login (Sign Up)', () => {
 		expect(location).toContain('state=xyz789')
 	})
 
+	test('should show email confirmation message when signup returns user but no session', async () => {
+		let mockClient = createMockSupabaseClient({
+			auth: {
+				getUser: mock(async () => ({
+					data: { user: null },
+					error: null,
+				})),
+				signInWithPassword: mock(async () => ({
+					data: { user: null, session: null },
+					error: null,
+				})),
+				signUp: mock(async () => ({
+					data: {
+						user: { id: 'new-user-456', email: 'new@example.com' },
+						session: null,
+					},
+					error: null,
+				})),
+			},
+		})
+
+		let app = new Hono()
+		app.route('/login', createLoginRoutes(mockClient))
+
+		let formData = new URLSearchParams()
+		formData.append('email', 'new@example.com')
+		formData.append('password', 'newpassword123')
+		formData.append('mode', 'signup')
+		formData.append('client_id', 'test-client')
+		formData.append('redirect_uri', 'http://example.com/callback')
+		formData.append('response_type', 'code')
+		formData.append('state', 'xyz789')
+		formData.append('code_challenge', 'challenge1234567890123456789012345678901234')
+		formData.append('code_challenge_method', 'S256')
+
+		let req = new Request('http://localhost/login', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body: formData.toString(),
+		})
+
+		let res = await app.fetch(req)
+
+		expect(res.status).toBe(200)
+		let html = await res.text()
+		expect(html).toContain('check your email')
+		expect(html).toContain('confirm')
+		expect(res.headers.get('Location')).toBeNull()
+	})
+
 	test('should return user-friendly error when email already exists and suggest signing in', async () => {
 		let mockClient = createMockSupabaseClient({
 			auth: {

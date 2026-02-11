@@ -320,13 +320,28 @@ export let createLoginRoutes = (supabaseClient: SupabaseClient): Hono => {
 				})
 			)
 		}
+		if (!session) {
+			return c.html(
+				renderLoginPage({
+					client_id,
+					redirect_uri,
+					response_type: 'code',
+					state,
+					code_challenge,
+					code_challenge_method,
+					error: 'Please check your email to confirm your account before signing in.',
+					mode,
+				})
+			)
+		}
+
 		let authorizationCode = storeAuthorizationCode({
 			userId: user.id,
 			clientId: client_id,
 			redirectUri: redirect_uri,
 			codeChallenge: code_challenge,
-			accessToken: session?.access_token || '',
-			refreshToken: session?.refresh_token || '',
+			accessToken: session.access_token,
+			refreshToken: session.refresh_token,
 		})
 
 		// Build redirect URL with authorization code
