@@ -57,6 +57,7 @@ describe('findMatches', () => {
 			makePerson({
 				id: '111e8400-e29b-41d4-a716-446655440011',
 				name: 'Bob',
+				gender: 'male',
 				matchmaker_id: matchmakerId,
 			}),
 		]
@@ -72,6 +73,7 @@ describe('findMatches', () => {
 			makePerson({
 				id: '111e8400-e29b-41d4-a716-446655440011',
 				name: 'Bob',
+				gender: 'male',
 				matchmaker_id: otherMatchmakerId,
 			}),
 		]
@@ -87,6 +89,7 @@ describe('findMatches', () => {
 			makePerson({
 				id: '111e8400-e29b-41d4-a716-446655440011',
 				name: 'Bob',
+				gender: 'male',
 				matchmaker_id: otherMatchmakerId,
 				notes: 'Secret notes',
 				preferences: { likes: 'hiking' },
@@ -133,6 +136,7 @@ describe('findMatches', () => {
 			makePerson({
 				id: '111e8400-e29b-41d4-a716-446655440011',
 				name: 'Bob',
+				gender: 'male',
 			}),
 		]
 
@@ -151,12 +155,14 @@ describe('findMatches', () => {
 				name: 'Bob',
 				location: 'NYC',
 				age: 30,
+				gender: 'male',
 			}),
 			makePerson({
 				id: '222e8400-e29b-41d4-a716-446655440022',
 				name: 'Charlie',
 				location: 'LA',
 				age: 30,
+				gender: 'male',
 			}),
 		]
 
@@ -176,12 +182,14 @@ describe('findMatches', () => {
 				name: 'Charlie',
 				location: 'LA',
 				age: 45,
+				gender: 'male',
 			}),
 			makePerson({
 				id: '111e8400-e29b-41d4-a716-446655440011',
 				name: 'Bob',
 				location: 'NYC',
 				age: 29,
+				gender: 'male',
 			}),
 		]
 
@@ -202,11 +210,168 @@ describe('findMatches', () => {
 				id: '111e8400-e29b-41d4-a716-446655440011',
 				name: 'Bob',
 				location: 'NYC',
+				gender: 'male',
 			}),
 		]
 
 		let matches = findMatches(subject, candidates, matchmakerId)
 
 		expect(matches[0].match_explanation).toContain('NYC')
+	})
+
+	test('should only match women with men (opposite gender)', () => {
+		let femaleSubject = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			age: 27,
+			location: 'NYC',
+			gender: 'female',
+		})
+
+		let candidates = [
+			makePerson({
+				id: '111e8400-e29b-41d4-a716-446655440011',
+				name: 'Bob',
+				gender: 'male',
+				age: 29,
+				location: 'NYC',
+			}),
+			makePerson({
+				id: '222e8400-e29b-41d4-a716-446655440022',
+				name: 'Lisa',
+				gender: 'female',
+				age: 26,
+				location: 'NYC',
+			}),
+		]
+
+		let matches = findMatches(femaleSubject, candidates, matchmakerId)
+
+		expect(matches).toHaveLength(1)
+		expect(matches[0].person.name).toBe('Bob')
+	})
+
+	test('should only match men with women (opposite gender)', () => {
+		let maleSubject = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Tom',
+			age: 30,
+			location: 'LA',
+			gender: 'male',
+		})
+
+		let candidates = [
+			makePerson({
+				id: '111e8400-e29b-41d4-a716-446655440011',
+				name: 'Sarah',
+				gender: 'female',
+				age: 28,
+				location: 'LA',
+			}),
+			makePerson({
+				id: '222e8400-e29b-41d4-a716-446655440022',
+				name: 'James',
+				gender: 'male',
+				age: 31,
+				location: 'LA',
+			}),
+			makePerson({
+				id: '333e8400-e29b-41d4-a716-446655440033',
+				name: 'Lisa',
+				gender: 'female',
+				age: 29,
+				location: 'NYC',
+			}),
+		]
+
+		let matches = findMatches(maleSubject, candidates, matchmakerId)
+
+		expect(matches).toHaveLength(2)
+		expect(matches.every(m => m.person.gender === 'female')).toBe(true)
+	})
+
+	test('should include candidates with no gender when subject has no gender', () => {
+		let unknownSubject = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Pat',
+			age: 30,
+			gender: null,
+		})
+
+		let candidates = [
+			makePerson({
+				id: '111e8400-e29b-41d4-a716-446655440011',
+				name: 'Bob',
+				gender: 'male',
+			}),
+			makePerson({
+				id: '222e8400-e29b-41d4-a716-446655440022',
+				name: 'Sam',
+				gender: null,
+			}),
+		]
+
+		let matches = findMatches(unknownSubject, candidates, matchmakerId)
+
+		// When gender is unknown, include all candidates (can't filter)
+		expect(matches).toHaveLength(2)
+	})
+
+	test('should include candidates with no gender when subject has a gender', () => {
+		let femaleSubject = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			gender: 'female',
+		})
+
+		let candidates = [
+			makePerson({
+				id: '111e8400-e29b-41d4-a716-446655440011',
+				name: 'Bob',
+				gender: 'male',
+			}),
+			makePerson({
+				id: '222e8400-e29b-41d4-a716-446655440022',
+				name: 'Sam',
+				gender: null,
+			}),
+			makePerson({
+				id: '333e8400-e29b-41d4-a716-446655440033',
+				name: 'Lisa',
+				gender: 'female',
+			}),
+		]
+
+		let matches = findMatches(femaleSubject, candidates, matchmakerId)
+
+		// Should include opposite gender + unknown gender, exclude same gender
+		expect(matches).toHaveLength(2)
+		expect(matches.map(m => m.person.name).sort()).toEqual(['Bob', 'Sam'])
+	})
+
+	test('should handle gender comparison case-insensitively', () => {
+		let femaleSubject = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			gender: 'Female',
+		})
+
+		let candidates = [
+			makePerson({
+				id: '111e8400-e29b-41d4-a716-446655440011',
+				name: 'Lisa',
+				gender: 'female',
+			}),
+			makePerson({
+				id: '222e8400-e29b-41d4-a716-446655440022',
+				name: 'Bob',
+				gender: 'Male',
+			}),
+		]
+
+		let matches = findMatches(femaleSubject, candidates, matchmakerId)
+
+		expect(matches).toHaveLength(1)
+		expect(matches[0].person.name).toBe('Bob')
 	})
 })

@@ -24,10 +24,17 @@ let calculateAgeScore = (subject: PersonResponse, candidate: PersonResponse): nu
 	return 0
 }
 
+let isOppositeGender = (subject: PersonResponse, candidate: PersonResponse): boolean => {
+	// If either gender is unknown, don't filter out — include as potential match
+	if (!subject.gender || !candidate.gender) return true
+	return subject.gender.toLowerCase() !== candidate.gender.toLowerCase()
+}
+
 let calculateGenderScore = (subject: PersonResponse, candidate: PersonResponse): number => {
 	if (!subject.gender || !candidate.gender) return 0
+	// Opposite gender match gets the score (heterosexual matching)
 	if (subject.gender.toLowerCase() !== candidate.gender.toLowerCase()) return 0.2
-	return 0.05
+	return 0
 }
 
 let buildExplanation = (subject: PersonResponse, candidate: PersonResponse): string => {
@@ -53,7 +60,7 @@ let buildExplanation = (subject: PersonResponse, candidate: PersonResponse): str
 		candidate.gender &&
 		subject.gender.toLowerCase() !== candidate.gender.toLowerCase()
 	) {
-		reasons.push(`Complementary genders`)
+		reasons.push(`Complementary match`)
 	}
 
 	if (reasons.length === 0) {
@@ -68,7 +75,7 @@ export let findMatches = (
 	allCandidates: PersonResponse[],
 	requestingMatchmakerId: string
 ): MatchResponse[] => {
-	let candidates = allCandidates.filter(p => p.id !== subject.id && p.active)
+	let candidates = allCandidates.filter(p => p.id !== subject.id && p.active && isOppositeGender(subject, p))
 
 	let matches: MatchResponse[] = candidates.map(candidate => {
 		let locationScore = calculateLocationScore(subject, candidate)
