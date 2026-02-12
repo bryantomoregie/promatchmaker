@@ -98,7 +98,8 @@ export interface Person {
 
 export interface Introduction {
 	id: string
-	matchmaker_id: string
+	matchmaker_a_id: string
+	matchmaker_b_id: string
 	person_a_id: string
 	person_b_id: string
 	status: string
@@ -108,14 +109,16 @@ export interface Introduction {
 }
 
 export interface Match {
-	person?: {
+	person: {
 		id: string
 		name: string
-		age?: number | null
-		location?: string | null
+		age: number | null
+		location: string | null
+		gender: string | null
 	}
-	compatibility_score?: number
-	match_reasons?: string[]
+	compatibility_score: number
+	match_explanation: string
+	is_cross_matchmaker: boolean
 }
 
 export interface Feedback {

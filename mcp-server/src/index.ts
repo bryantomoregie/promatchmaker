@@ -78,7 +78,8 @@ export function createServer(apiClient: ApiClient) {
 			},
 			{
 				name: 'create_introduction',
-				description: 'Create an introduction between two people',
+				description:
+					'Create an introduction between two people. Supports cross-matchmaker introductions where each person belongs to a different matchmaker. You must own at least one person.',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -91,7 +92,8 @@ export function createServer(apiClient: ApiClient) {
 			},
 			{
 				name: 'list_introductions',
-				description: 'List all introductions for the matchmaker',
+				description:
+					'List all introductions where you are either matchmaker (includes cross-matchmaker introductions)',
 				inputSchema: {
 					type: 'object',
 					properties: {},
@@ -116,7 +118,8 @@ export function createServer(apiClient: ApiClient) {
 			},
 			{
 				name: 'find_matches',
-				description: 'Find compatible matches for a person',
+				description:
+					'Find compatible matches for a person across all matchmakers. Returns matches with limited info (name, age, location, gender) and compatibility scores. Cross-matchmaker matches are flagged.',
 				inputSchema: {
 					type: 'object',
 					properties: {

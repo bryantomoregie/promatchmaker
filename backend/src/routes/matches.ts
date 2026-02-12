@@ -31,19 +31,19 @@ export let createMatchesRoutes = (
 			return c.json({ error: 'Person not found' }, 404)
 		}
 
-		// Get all active people for the matchmaker
+		// Get ALL active people across all matchmakers (excluding the subject)
 		let { data: allPeople, error: peopleError } = await supabaseClient
 			.from('people')
 			.select('*')
-			.eq('matchmaker_id', userId)
 			.eq('active', true)
+			.neq('id', personId)
 
 		if (peopleError) {
 			return c.json({ error: peopleError.message }, 500)
 		}
 
 		// Find matches using the algorithm
-		let matches = findMatches(personId, allPeople || [])
+		let matches = findMatches(person, allPeople || [], userId)
 
 		return c.json(matches, 200)
 	})

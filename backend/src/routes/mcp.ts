@@ -11,6 +11,8 @@ import {
 	GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import type { SupabaseClient } from '../lib/supabase'
+import { findMatches } from '../services/matchingAlgorithm'
+import type { PersonResponse } from '../schemas/people'
 import { prompts, getPrompt } from '../prompts'
 
 type Env = {
@@ -232,7 +234,8 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 				{
 					name: 'create_introduction',
-					description: 'Create an introduction between two people',
+					description:
+						'Create an introduction between two people. Supports cross-matchmaker introductions where each person belongs to a different matchmaker. You must own at least one person.',
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -245,7 +248,8 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 				{
 					name: 'list_introductions',
-					description: 'List all introductions for the matchmaker',
+					description:
+						'List all introductions where you are either matchmaker (includes cross-matchmaker introductions)',
 					inputSchema: {
 						type: 'object',
 						properties: {},
@@ -270,7 +274,8 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 				},
 				{
 					name: 'find_matches',
-					description: 'Find compatible matches for a person',
+					description:
+						'Find compatible matches for a person across all matchmakers. Returns matches with limited info (name, age, location, gender) and compatibility scores. Cross-matchmaker matches are flagged.',
 					inputSchema: {
 						type: 'object',
 						properties: {
@@ -448,14 +453,35 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 						person_b_id: string
 						notes?: string
 					}
+
+					// Look up both people to get their matchmaker IDs
+					let { data: personA, error: personAError } = await supabaseClient
+						.from('people')
+						.select('id, matchmaker_id')
+						.eq('id', person_a_id)
+						.single()
+					if (personAError || !personA) throw new Error('Person A not found')
+
+					let { data: personB, error: personBError } = await supabaseClient
+						.from('people')
+						.select('id, matchmaker_id')
+						.eq('id', person_b_id)
+						.single()
+					if (personBError || !personB) throw new Error('Person B not found')
+
+					// Validate requesting user owns at least one person
+					if (personA.matchmaker_id !== userId && personB.matchmaker_id !== userId) {
+						throw new Error('You must own at least one person in the introduction')
+					}
+
 					let { data, error } = await supabaseClient
 						.from('introductions')
 						.insert({
-							matchmaker_id: userId,
+							matchmaker_a_id: personA.matchmaker_id,
+							matchmaker_b_id: personB.matchmaker_id,
 							person_a_id,
 							person_b_id,
 							notes: notes || null,
-							status: 'pending',
 						})
 						.select()
 						.single()
@@ -469,7 +495,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 					let { data, error } = await supabaseClient
 						.from('introductions')
 						.select('*')
-						.eq('matchmaker_id', userId)
+						.or(`matchmaker_a_id.eq.${userId},matchmaker_b_id.eq.${userId}`)
 					if (error) throw new Error(error.message)
 					return {
 						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
@@ -485,7 +511,7 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 						.from('introductions')
 						.update(updates)
 						.eq('id', id)
-						.eq('matchmaker_id', userId)
+						.or(`matchmaker_a_id.eq.${userId},matchmaker_b_id.eq.${userId}`)
 						.select()
 						.single()
 					if (error) throw new Error(error.message)
@@ -504,29 +530,29 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 						throw new Error('Invalid arguments: person_id is required and must be a string')
 					}
 					// Verify the person exists and belongs to this user
-					let { error: personError } = await supabaseClient
+					let { data: person, error: personError } = await supabaseClient
 						.from('people')
-						.select('id')
+						.select('*')
 						.eq('id', args.person_id)
 						.eq('matchmaker_id', userId)
-						.single()
+						.maybeSingle()
 					if (personError) throw new Error(personError.message)
+					if (!person) throw new Error('Person not found')
 
-					// Get all other active people
+					// Get ALL active people across all matchmakers (excluding the subject)
 					let { data: candidates, error: candidatesError } = await supabaseClient
 						.from('people')
 						.select('*')
-						.eq('matchmaker_id', userId)
 						.eq('active', true)
 						.neq('id', args.person_id)
 					if (candidatesError) throw new Error(candidatesError.message)
 
-					// Simple matching - return candidates with compatibility score
-					let matches = (candidates || []).map(candidate => ({
-						person: candidate,
-						compatibility_score: Math.random(), // Placeholder
-						reasons: ['Both are in the matchmaker system'],
-					}))
+					// Find matches using the algorithm
+					let matches = findMatches(
+						person as PersonResponse,
+						(candidates || []) as PersonResponse[],
+						userId
+					)
 					return {
 						content: [{ type: 'text', text: JSON.stringify(matches, null, 2) }],
 					}
@@ -557,9 +583,10 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 						.from('introductions')
 						.select('*')
 						.eq('id', args.id)
-						.eq('matchmaker_id', userId)
-						.single()
+						.or(`matchmaker_a_id.eq.${userId},matchmaker_b_id.eq.${userId}`)
+						.maybeSingle()
 					if (error) throw new Error(error.message)
+					if (!data) throw new Error('Introduction not found')
 					return {
 						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
 					}
