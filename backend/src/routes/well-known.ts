@@ -29,10 +29,10 @@ export let createWellKnownRoutes = (): Hono => {
 	app.get('/oauth-protected-resource', c => {
 		let baseUrl = getBaseUrl(c)
 
-		// RFC 9728 requires authorization_servers to be array of objects with issuer field
+		// RFC 9728: authorization_servers is an array of issuer identifier strings
 		return c.json({
 			resource: baseUrl,
-			authorization_servers: [{ issuer: baseUrl }],
+			authorization_servers: [baseUrl],
 		})
 	})
 
