@@ -8,6 +8,7 @@ let toLimitedPerson = (person: PersonResponse): LimitedPerson => ({
 	age: person.age,
 	location: person.location,
 	gender: person.gender,
+	is_seed: person.is_seed,
 })
 
 // --- Hard Filters ---
