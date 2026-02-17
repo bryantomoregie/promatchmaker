@@ -144,4 +144,49 @@ describe('parsePreferences', () => {
 
 		expect(result.lookingFor?.wantsChildren).toBeNull()
 	})
+
+	test('should parse valid sections independently when one section is invalid', () => {
+		let raw = {
+			aboutMe: { height: 70, religion: 'Christian' },
+			lookingFor: { fitnessPreference: 'INVALID_VALUE' },
+			dealBreakers: ['smoker'],
+		}
+
+		let result = parsePreferences(raw)
+
+		expect(result.aboutMe?.height).toBe(70)
+		expect(result.aboutMe?.religion).toBe('Christian')
+		expect(result.lookingFor).toBeUndefined()
+		expect(result.dealBreakers).toEqual(['smoker'])
+	})
+
+	test('should filter out invalid deal breaker values', () => {
+		let raw = {
+			dealBreakers: ['smoker', 'unknown_thing', 'divorced'],
+		}
+
+		let result = parsePreferences(raw)
+
+		expect(result.dealBreakers).toEqual(['smoker', 'divorced'])
+	})
+
+	test('should parse income field in aboutMe', () => {
+		let raw = {
+			aboutMe: { income: 'high' },
+		}
+
+		let result = parsePreferences(raw)
+
+		expect(result.aboutMe?.income).toBe('high')
+	})
+
+	test('should reject invalid income values', () => {
+		let raw = {
+			aboutMe: { income: 'ultra_rich' },
+		}
+
+		let result = parsePreferences(raw)
+
+		expect(result.aboutMe).toBeUndefined()
+	})
 })

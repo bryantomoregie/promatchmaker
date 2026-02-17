@@ -60,17 +60,6 @@ let checkAgeInRange = (
 	return true
 }
 
-let passesAgeRange = (
-	subjectPrefs: StructuredPreferences,
-	subjectAge: number | null,
-	candidatePrefs: StructuredPreferences,
-	candidateAge: number | null
-): boolean => {
-	if (!checkAgeInRange(candidateAge, subjectPrefs.lookingFor?.ageRange)) return false
-	if (!checkAgeInRange(subjectAge, candidatePrefs.lookingFor?.ageRange)) return false
-	return true
-}
-
 let passesReligionFilter = (
 	subjectPrefs: StructuredPreferences,
 	candidatePrefs: StructuredPreferences
@@ -279,6 +268,37 @@ let calculateReligionScore = (
 	return 0
 }
 
+let INCOME_LEVELS = ['low', 'moderate', 'high'] as const
+
+let calculateIncomeScore = (
+	subjectPrefs: StructuredPreferences,
+	candidatePrefs: StructuredPreferences
+): number => {
+	let subjectPref = subjectPrefs.lookingFor?.incomePreference
+	let candidatePref = candidatePrefs.lookingFor?.incomePreference
+	let subjectIncome = subjectPrefs.aboutMe?.income
+	let candidateIncome = candidatePrefs.aboutMe?.income
+
+	if (!subjectPref && !candidatePref) return 0
+
+	let scoreOne = (pref: string | undefined, income: string | undefined): number => {
+		if (!pref || !income) return 0
+		if (pref === 'any') return 1
+		if (pref === income) return 1
+		let prefIdx = INCOME_LEVELS.indexOf(pref as (typeof INCOME_LEVELS)[number])
+		let incomeIdx = INCOME_LEVELS.indexOf(income as (typeof INCOME_LEVELS)[number])
+		if (prefIdx >= 0 && incomeIdx >= 0 && Math.abs(prefIdx - incomeIdx) === 1) return 0.5
+		return 0
+	}
+
+	let s1 = scoreOne(subjectPref, candidateIncome)
+	let s2 = scoreOne(candidatePref, subjectIncome)
+
+	let count = (subjectPref ? 1 : 0) + (candidatePref ? 1 : 0)
+	if (count === 0) return 0
+	return ((s1 + s2) / count) * 0.10
+}
+
 // --- Explanation Builder ---
 
 let buildExplanation = (
@@ -339,6 +359,12 @@ let buildExplanation = (
 		reasons.push(`Shared ${candidateEthnicity} background`)
 	}
 
+	let subjectIncome = subjectPrefs.aboutMe?.income
+	let candidateIncome = candidatePrefs.aboutMe?.income
+	if (subjectIncome && candidateIncome && subjectIncome === candidateIncome) {
+		reasons.push(`Similar income level`)
+	}
+
 	if (reasons.length === 0) {
 		reasons.push('Potential match in the network')
 	}
@@ -355,24 +381,26 @@ export let findMatches = (
 ): MatchResponse[] => {
 	let subjectPrefs = parsePreferences(subject.preferences)
 
+	let prefsCache = new Map<string, StructuredPreferences>()
+
 	let candidates = allCandidates.filter(p => {
 		if (p.id === subject.id || !p.active) return false
 		if (!isOppositeGender(subject, p)) return false
 
 		let candidatePrefs = parsePreferences(p.preferences)
+		prefsCache.set(p.id, candidatePrefs)
 
 		if (!passesDealBreakers(subjectPrefs, candidatePrefs)) return false
-		if (!passesAgeRange(subjectPrefs, subject.age, candidatePrefs, p.age)) return false
 		if (!passesReligionFilter(subjectPrefs, candidatePrefs)) return false
 
 		return true
 	})
 
-	let eitherHasStructured = hasStructuredPreferences(subjectPrefs)
+	let subjectHasStructured = hasStructuredPreferences(subjectPrefs)
 
 	let matches: MatchResponse[] = candidates.map(candidate => {
-		let candidatePrefs = parsePreferences(candidate.preferences)
-		let useStructured = eitherHasStructured || hasStructuredPreferences(candidatePrefs)
+		let candidatePrefs = prefsCache.get(candidate.id)!
+		let useStructured = subjectHasStructured || hasStructuredPreferences(candidatePrefs)
 
 		let compatibility_score: number
 
@@ -385,6 +413,7 @@ export let findMatches = (
 			let ethnicityScore = calculateEthnicityScore(subjectPrefs, candidatePrefs)
 			let childrenScore = calculateChildrenScore(subjectPrefs, candidatePrefs)
 			let religionScore = calculateReligionScore(subjectPrefs, candidatePrefs)
+			let incomeScore = calculateIncomeScore(subjectPrefs, candidatePrefs)
 			let baseScore = 0.05
 
 			compatibility_score = Math.min(
@@ -396,7 +425,8 @@ export let findMatches = (
 					fitnessScore +
 					ethnicityScore +
 					childrenScore +
-					religionScore,
+					religionScore +
+					incomeScore,
 				1
 			)
 		} else {

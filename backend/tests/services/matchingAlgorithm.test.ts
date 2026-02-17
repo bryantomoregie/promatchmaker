@@ -537,9 +537,9 @@ describe('findMatches', () => {
 		expect(matches).toHaveLength(1)
 	})
 
-	// --- Age Range Filter Tests ---
+	// --- Age Range Scoring Tests (soft filter — candidates outside range get lower score) ---
 
-	test('should filter out candidate outside subject age range preference', () => {
+	test('should score candidate in preferred age range higher than one outside', () => {
 		let subjectWithPrefs = makePerson({
 			id: '550e8400-e29b-41d4-a716-446655440000',
 			name: 'Sarah',
@@ -565,11 +565,13 @@ describe('findMatches', () => {
 
 		let matches = findMatches(subjectWithPrefs, candidates, matchmakerId)
 
-		expect(matches).toHaveLength(1)
-		expect(matches[0].person.name).toBe('Bob')
+		expect(matches).toHaveLength(2)
+		let bobMatch = matches.find(m => m.person.name === 'Bob')!
+		let charlieMatch = matches.find(m => m.person.name === 'Old Charlie')!
+		expect(bobMatch.compatibility_score).toBeGreaterThan(charlieMatch.compatibility_score)
 	})
 
-	test('should filter bidirectionally on age range — subject outside candidate range', () => {
+	test('should still include candidate outside age range with lower score', () => {
 		let subjectWithPrefs = makePerson({
 			id: '550e8400-e29b-41d4-a716-446655440000',
 			name: 'Sarah',
@@ -589,10 +591,11 @@ describe('findMatches', () => {
 
 		let matches = findMatches(subjectWithPrefs, candidates, matchmakerId)
 
-		expect(matches).toHaveLength(0)
+		expect(matches).toHaveLength(1)
+		expect(matches[0].compatibility_score).toBeGreaterThan(0)
 	})
 
-	test('should handle partial age range with only min', () => {
+	test('should score higher when candidate is in partial age range with only min', () => {
 		let subjectWithPrefs = makePerson({
 			id: '550e8400-e29b-41d4-a716-446655440000',
 			name: 'Sarah',
@@ -606,7 +609,7 @@ describe('findMatches', () => {
 				id: '111e8400-e29b-41d4-a716-446655440011',
 				name: 'Bob',
 				gender: 'male',
-				age: 28,
+				age: 22,
 			}),
 			makePerson({
 				id: '222e8400-e29b-41d4-a716-446655440022',
@@ -618,8 +621,10 @@ describe('findMatches', () => {
 
 		let matches = findMatches(subjectWithPrefs, candidates, matchmakerId)
 
-		expect(matches).toHaveLength(1)
-		expect(matches[0].person.name).toBe('Charlie')
+		expect(matches).toHaveLength(2)
+		let charlieMatch = matches.find(m => m.person.name === 'Charlie')!
+		let bobMatch = matches.find(m => m.person.name === 'Bob')!
+		expect(charlieMatch.compatibility_score).toBeGreaterThan(bobMatch.compatibility_score)
 	})
 
 	test('should not filter on age range when no age range preference exists', () => {
@@ -891,5 +896,261 @@ describe('findMatches', () => {
 
 		expect(matches).toHaveLength(1)
 		expect(matches[0].compatibility_score).toBeGreaterThan(0)
+	})
+
+	// --- Income Scoring Tests ---
+
+	test('should score higher when income preferences match', () => {
+		let subjectWithPrefs = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			age: 27,
+			location: 'NYC',
+			gender: 'female',
+			preferences: {
+				aboutMe: { income: 'high' },
+				lookingFor: { incomePreference: 'high' },
+			},
+		})
+
+		let goodMatch = makePerson({
+			id: '111e8400-e29b-41d4-a716-446655440011',
+			name: 'Bob',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { income: 'high' },
+				lookingFor: { incomePreference: 'high' },
+			},
+		})
+
+		let weakMatch = makePerson({
+			id: '222e8400-e29b-41d4-a716-446655440022',
+			name: 'Charlie',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { income: 'low' },
+				lookingFor: { incomePreference: 'high' },
+			},
+		})
+
+		let matches = findMatches(subjectWithPrefs, [goodMatch, weakMatch], matchmakerId)
+
+		expect(matches).toHaveLength(2)
+		let bobMatch = matches.find(m => m.person.name === 'Bob')!
+		let charlieMatch = matches.find(m => m.person.name === 'Charlie')!
+		expect(bobMatch.compatibility_score).toBeGreaterThan(charlieMatch.compatibility_score)
+	})
+
+	test('should give partial income score for adjacent income levels', () => {
+		let subjectWithPrefs = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			age: 27,
+			location: 'NYC',
+			gender: 'female',
+			preferences: {
+				aboutMe: { income: 'moderate' },
+				lookingFor: { incomePreference: 'high' },
+			},
+		})
+
+		let adjacentMatch = makePerson({
+			id: '111e8400-e29b-41d4-a716-446655440011',
+			name: 'Bob',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { income: 'moderate' },
+				lookingFor: { incomePreference: 'moderate' },
+			},
+		})
+
+		let noIncomeMatch = makePerson({
+			id: '222e8400-e29b-41d4-a716-446655440022',
+			name: 'Charlie',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: null,
+		})
+
+		let matches = findMatches(subjectWithPrefs, [adjacentMatch, noIncomeMatch], matchmakerId)
+
+		let bobMatch = matches.find(m => m.person.name === 'Bob')!
+		let charlieMatch = matches.find(m => m.person.name === 'Charlie')!
+		expect(bobMatch.compatibility_score).toBeGreaterThan(charlieMatch.compatibility_score)
+	})
+
+	test('should include income in explanation when both have same income level', () => {
+		let subjectWithPrefs = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			age: 27,
+			location: 'NYC',
+			gender: 'female',
+			preferences: {
+				aboutMe: { income: 'high' },
+			},
+		})
+
+		let candidates = [
+			makePerson({
+				id: '111e8400-e29b-41d4-a716-446655440011',
+				name: 'Bob',
+				age: 30,
+				location: 'NYC',
+				gender: 'male',
+				preferences: {
+					aboutMe: { income: 'high' },
+				},
+			}),
+		]
+
+		let matches = findMatches(subjectWithPrefs, candidates, matchmakerId)
+
+		expect(matches).toHaveLength(1)
+		expect(matches[0].match_explanation).toContain('income')
+	})
+
+	// --- Height Scoring Tests ---
+
+	test('should score higher when height is within preferred range', () => {
+		let subjectWithPrefs = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			age: 27,
+			location: 'NYC',
+			gender: 'female',
+			preferences: {
+				aboutMe: { height: 64 },
+				lookingFor: { heightRange: { min: 68, max: 76 } },
+			},
+		})
+
+		let tallBob = makePerson({
+			id: '111e8400-e29b-41d4-a716-446655440011',
+			name: 'Bob',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { height: 72 },
+				lookingFor: { heightRange: { min: 60, max: 68 } },
+			},
+		})
+
+		let shortCharlie = makePerson({
+			id: '222e8400-e29b-41d4-a716-446655440022',
+			name: 'Charlie',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { height: 62 },
+			},
+		})
+
+		let matches = findMatches(subjectWithPrefs, [tallBob, shortCharlie], matchmakerId)
+
+		let bobMatch = matches.find(m => m.person.name === 'Bob')!
+		let charlieMatch = matches.find(m => m.person.name === 'Charlie')!
+		expect(bobMatch.compatibility_score).toBeGreaterThan(charlieMatch.compatibility_score)
+	})
+
+	// --- Ethnicity Scoring Tests ---
+
+	test('should score higher when ethnicity matches preference', () => {
+		let subjectWithPrefs = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			age: 27,
+			location: 'NYC',
+			gender: 'female',
+			preferences: {
+				aboutMe: { ethnicity: 'Nigerian' },
+				lookingFor: { ethnicityPreference: ['Nigerian'] },
+			},
+		})
+
+		let matchingBob = makePerson({
+			id: '111e8400-e29b-41d4-a716-446655440011',
+			name: 'Bob',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { ethnicity: 'Nigerian' },
+				lookingFor: { ethnicityPreference: ['Nigerian'] },
+			},
+		})
+
+		let nonMatchingCharlie = makePerson({
+			id: '222e8400-e29b-41d4-a716-446655440022',
+			name: 'Charlie',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { ethnicity: 'Korean' },
+				lookingFor: { ethnicityPreference: ['Korean'] },
+			},
+		})
+
+		let matches = findMatches(subjectWithPrefs, [matchingBob, nonMatchingCharlie], matchmakerId)
+
+		let bobMatch = matches.find(m => m.person.name === 'Bob')!
+		let charlieMatch = matches.find(m => m.person.name === 'Charlie')!
+		expect(bobMatch.compatibility_score).toBeGreaterThan(charlieMatch.compatibility_score)
+	})
+
+	// --- Children Scoring Tests ---
+
+	test('should score higher when children preferences align', () => {
+		let subjectWithPrefs = makePerson({
+			id: '550e8400-e29b-41d4-a716-446655440000',
+			name: 'Sarah',
+			age: 27,
+			location: 'NYC',
+			gender: 'female',
+			preferences: {
+				aboutMe: { hasChildren: false },
+				lookingFor: { wantsChildren: false },
+			},
+		})
+
+		let noKidsBob = makePerson({
+			id: '111e8400-e29b-41d4-a716-446655440011',
+			name: 'Bob',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { hasChildren: false },
+				lookingFor: { wantsChildren: false },
+			},
+		})
+
+		let hasKidsCharlie = makePerson({
+			id: '222e8400-e29b-41d4-a716-446655440022',
+			name: 'Charlie',
+			age: 30,
+			location: 'NYC',
+			gender: 'male',
+			preferences: {
+				aboutMe: { hasChildren: true },
+				lookingFor: { wantsChildren: true },
+			},
+		})
+
+		let matches = findMatches(subjectWithPrefs, [noKidsBob, hasKidsCharlie], matchmakerId)
+
+		let bobMatch = matches.find(m => m.person.name === 'Bob')!
+		let charlieMatch = matches.find(m => m.person.name === 'Charlie')!
+		expect(bobMatch.compatibility_score).toBeGreaterThan(charlieMatch.compatibility_score)
 	})
 })
