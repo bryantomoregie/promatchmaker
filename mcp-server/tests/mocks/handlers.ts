@@ -22,6 +22,7 @@ export let handlers = [
 				personality: null,
 				notes: null,
 				active: true,
+				is_seed: false,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString(),
 			},
@@ -47,6 +48,7 @@ export let handlers = [
 				personality: null,
 				notes: null,
 				active: true,
+				is_seed: false,
 				created_at: new Date().toISOString(),
 				updated_at: new Date().toISOString(),
 			},
@@ -74,6 +76,7 @@ export let handlers = [
 			personality: { introvert: false },
 			notes: 'Looking for someone creative',
 			active: true,
+			is_seed: false,
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString(),
 		})
@@ -101,6 +104,7 @@ export let handlers = [
 			personality: body.personality ?? { introvert: false },
 			notes: body.notes ?? 'Looking for someone creative',
 			active: true,
+			is_seed: false,
 			created_at: '2026-01-08T00:00:00.000Z',
 			updated_at: new Date().toISOString(),
 		})
@@ -230,6 +234,7 @@ export let handlers = [
 					age: 30,
 					location: 'NYC',
 					gender: 'male',
+					is_seed: false,
 				},
 				compatibility_score: 0.8,
 				match_explanation: 'Both based in NYC, Compatible age range (28 and 30)',
@@ -260,6 +265,7 @@ export let handlers = [
 			personality: { introvert: false },
 			notes: 'Looking for someone creative',
 			active: false,
+			is_seed: false,
 			created_at: '2026-01-08T00:00:00.000Z',
 			updated_at: new Date().toISOString(),
 		})

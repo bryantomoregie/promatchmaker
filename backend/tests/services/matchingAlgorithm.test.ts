@@ -997,10 +997,12 @@ describe('findMatches', () => {
 
 		let matches = findMatches(subjectWithPrefs, candidates, matchmakerId)
 
-		// Seed No Match is age 50 (outside subject's 25-35 range) and subject age 27 is outside candidate's 40-55 range
-		expect(matches).toHaveLength(1)
-		expect(matches[0].person.name).toBe('Seed Match')
-		expect(matches[0].is_cross_matchmaker).toBe(true)
+		// Both match (age range is soft filter), but Seed Match scores higher due to religion + ethnicity + age alignment
+		expect(matches).toHaveLength(2)
+		let seedMatch = matches.find(m => m.person.name === 'Seed Match')!
+		let seedNoMatch = matches.find(m => m.person.name === 'Seed No Match')!
+		expect(seedMatch.compatibility_score).toBeGreaterThan(seedNoMatch.compatibility_score)
+		expect(seedMatch.is_cross_matchmaker).toBe(true)
 	})
 
 	// --- Income Scoring Tests ---

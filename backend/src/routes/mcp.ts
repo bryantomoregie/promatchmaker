@@ -14,6 +14,7 @@ import type { SupabaseClient } from '../lib/supabase'
 import { findMatches } from '../services/matchingAlgorithm'
 import { personResponseSchema } from '../schemas/people'
 import { prompts, getPrompt } from '../prompts'
+import { createIntroduction } from '../services/introductions'
 
 type Env = {
 	Variables: {
@@ -458,40 +459,15 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 						notes?: string
 					}
 
-					// Look up both people to get their matchmaker IDs
-					let { data: personA, error: personAError } = await supabaseClient
-						.from('people')
-						.select('id, matchmaker_id')
-						.eq('id', person_a_id)
-						.single()
-					if (personAError || !personA) throw new Error('Person A not found')
-
-					let { data: personB, error: personBError } = await supabaseClient
-						.from('people')
-						.select('id, matchmaker_id')
-						.eq('id', person_b_id)
-						.single()
-					if (personBError || !personB) throw new Error('Person B not found')
-
-					// Validate requesting user owns at least one person
-					if (personA.matchmaker_id !== userId && personB.matchmaker_id !== userId) {
-						throw new Error('You must own at least one person in the introduction')
-					}
-
-					let { data, error } = await supabaseClient
-						.from('introductions')
-						.insert({
-							matchmaker_a_id: personA.matchmaker_id,
-							matchmaker_b_id: personB.matchmaker_id,
-							person_a_id,
-							person_b_id,
-							notes: notes || null,
-						})
-						.select()
-						.single()
-					if (error) throw new Error(error.message)
+					let result = await createIntroduction(supabaseClient, {
+						person_a_id,
+						person_b_id,
+						notes,
+						userId,
+					})
+					if (result.error) throw new Error(result.error.message)
 					return {
-						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
+						content: [{ type: 'text', text: JSON.stringify(result.data, null, 2) }],
 					}
 				}
 

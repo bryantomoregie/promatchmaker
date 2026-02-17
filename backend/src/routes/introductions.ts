@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import type { SupabaseClient } from '../lib/supabase'
 import { createIntroductionSchema, updateIntroductionSchema } from '../schemas/introductions'
+import { createIntroduction } from '../services/introductions'
 
 type Variables = {
 	userId: string
@@ -16,49 +17,18 @@ export let createIntroductionsRoutes = (
 		let userId = c.get('userId')
 		let data = c.req.valid('json')
 
-		// Look up both people to get their matchmaker IDs
-		let { data: personA, error: personAError } = await supabaseClient
-			.from('people')
-			.select('id, matchmaker_id')
-			.eq('id', data.person_a_id)
-			.single()
+		let result = await createIntroduction(supabaseClient, {
+			person_a_id: data.person_a_id,
+			person_b_id: data.person_b_id,
+			notes: data.notes,
+			userId,
+		})
 
-		if (personAError || !personA) {
-			return c.json({ error: 'Person A not found' }, 404)
+		if (result.error) {
+			return c.json({ error: result.error.message }, result.error.status as 403 | 404 | 500)
 		}
 
-		let { data: personB, error: personBError } = await supabaseClient
-			.from('people')
-			.select('id, matchmaker_id')
-			.eq('id', data.person_b_id)
-			.single()
-
-		if (personBError || !personB) {
-			return c.json({ error: 'Person B not found' }, 404)
-		}
-
-		// Validate the requesting user owns at least one of the people
-		if (personA.matchmaker_id !== userId && personB.matchmaker_id !== userId) {
-			return c.json({ error: 'You must own at least one person in the introduction' }, 403)
-		}
-
-		let { data: introduction, error } = await supabaseClient
-			.from('introductions')
-			.insert({
-				person_a_id: data.person_a_id,
-				person_b_id: data.person_b_id,
-				notes: data.notes || null,
-				matchmaker_a_id: personA.matchmaker_id,
-				matchmaker_b_id: personB.matchmaker_id,
-			})
-			.select()
-			.single()
-
-		if (error) {
-			return c.json({ error: error.message }, 500)
-		}
-
-		return c.json(introduction, 201)
+		return c.json(result.data, 201)
 	})
 
 	app.get('/', async c => {

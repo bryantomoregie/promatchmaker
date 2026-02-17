@@ -27,6 +27,7 @@ let mockPerson = {
 	personality: null,
 	notes: null,
 	active: true,
+	is_seed: false,
 	created_at: new Date().toISOString(),
 	updated_at: new Date().toISOString(),
 }
@@ -44,6 +45,7 @@ describe('GET /api/matches/:personId', () => {
 			personality: { type: 'extrovert' },
 			notes: 'Secret notes',
 			active: true,
+			is_seed: false,
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString(),
 		}
