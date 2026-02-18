@@ -35,9 +35,21 @@ let createApp = (mockClient: ReturnType<typeof createMockSupabaseClient>) => {
 	return app
 }
 
+let mockOwnershipCheck = (person: { id: string } | null = { id: mockPersonId }) =>
+	mock(() => ({
+		eq: mock(() => ({
+			eq: mock(() => ({
+				maybeSingle: mock(() => ({
+					data: person,
+					error: null,
+				})),
+			})),
+		})),
+	}))
+
 describe('POST /api/match-decisions', () => {
 	test('should create a decision and return 201', async () => {
-		let insertMock = mock((_data: unknown) => ({
+		let upsertMock = mock((_data: unknown, _opts: unknown) => ({
 			select: mock(() => ({
 				single: mock(() => ({
 					data: mockDecision,
@@ -47,9 +59,12 @@ describe('POST /api/match-decisions', () => {
 		}))
 
 		let mockClient = createMockSupabaseClient({
-			from: mock((_table: string) => ({
-				insert: insertMock,
-			})),
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck() }
+				}
+				return { upsert: upsertMock }
+			}),
 		})
 
 		let app = createApp(mockClient)
@@ -113,9 +128,9 @@ describe('POST /api/match-decisions', () => {
 	})
 
 	test('should set matchmaker_id from auth context', async () => {
-		let insertedData: unknown = null
-		let insertMock = mock((data: unknown) => {
-			insertedData = data
+		let upsertedData: unknown = null
+		let upsertMock = mock((data: unknown, _opts: unknown) => {
+			upsertedData = data
 			return {
 				select: mock(() => ({
 					single: mock(() => ({
@@ -127,9 +142,12 @@ describe('POST /api/match-decisions', () => {
 		})
 
 		let mockClient = createMockSupabaseClient({
-			from: mock((_table: string) => ({
-				insert: insertMock,
-			})),
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck() }
+				}
+				return { upsert: upsertMock }
+			}),
 		})
 
 		let app = createApp(mockClient)
@@ -146,25 +164,61 @@ describe('POST /api/match-decisions', () => {
 			})
 		)
 
-		expect(insertedData).toEqual(
+		expect(upsertedData).toEqual(
 			expect.objectContaining({
 				matchmaker_id: mockUserId,
 			})
 		)
 	})
 
-	test('should return 500 when Supabase insert fails', async () => {
+	test('should return 404 when person is not owned by matchmaker', async () => {
 		let mockClient = createMockSupabaseClient({
-			from: mock((_table: string) => ({
-				insert: mock((_data: unknown) => ({
-					select: mock(() => ({
-						single: mock(() => ({
-							data: null,
-							error: { message: 'Unique constraint violated' },
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck(null) }
+				}
+				return {}
+			}),
+		})
+
+		let app = createApp(mockClient)
+
+		let res = await app.fetch(
+			new Request('http://localhost/', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					person_id: mockPersonId,
+					candidate_id: mockCandidateId,
+					decision: 'declined',
+					decline_reason: 'test',
+				}),
+			})
+		)
+
+		let json = (await res.json()) as ErrorResponse
+
+		expect(res.status).toBe(404)
+		expect(json.error).toBe('Person not found or not owned by you')
+	})
+
+	test('should return 500 when Supabase upsert fails', async () => {
+		let mockClient = createMockSupabaseClient({
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck() }
+				}
+				return {
+					upsert: mock((_data: unknown, _opts: unknown) => ({
+						select: mock(() => ({
+							single: mock(() => ({
+								data: null,
+								error: { message: 'Unique constraint violated' },
+							})),
 						})),
 					})),
-				})),
-			})),
+				}
+			}),
 		})
 
 		let app = createApp(mockClient)
@@ -194,16 +248,21 @@ describe('GET /api/match-decisions/:personId', () => {
 		let decisions = [mockDecision]
 
 		let mockClient = createMockSupabaseClient({
-			from: mock((_table: string) => ({
-				select: mock((_columns: string) => ({
-					eq: mock((_column: string, _value: unknown) => ({
-						eq: mock(() => ({
-							data: decisions,
-							error: null,
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck() }
+				}
+				return {
+					select: mock((_columns: string) => ({
+						eq: mock((_column: string, _value: unknown) => ({
+							eq: mock(() => ({
+								data: decisions,
+								error: null,
+							})),
 						})),
 					})),
-				})),
-			})),
+				}
+			}),
 		})
 
 		let app = createApp(mockClient)
@@ -218,18 +277,42 @@ describe('GET /api/match-decisions/:personId', () => {
 		expect(json[0].decline_reason).toBe('too many tattoos')
 	})
 
+	test('should return 404 when person is not owned by matchmaker', async () => {
+		let mockClient = createMockSupabaseClient({
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck(null) }
+				}
+				return {}
+			}),
+		})
+
+		let app = createApp(mockClient)
+
+		let res = await app.fetch(new Request(`http://localhost/${mockPersonId}`))
+		let json = (await res.json()) as ErrorResponse
+
+		expect(res.status).toBe(404)
+		expect(json.error).toBe('Person not found or not owned by you')
+	})
+
 	test('should return empty array when no decisions exist', async () => {
 		let mockClient = createMockSupabaseClient({
-			from: mock((_table: string) => ({
-				select: mock((_columns: string) => ({
-					eq: mock((_column: string, _value: unknown) => ({
-						eq: mock(() => ({
-							data: [],
-							error: null,
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck() }
+				}
+				return {
+					select: mock((_columns: string) => ({
+						eq: mock((_column: string, _value: unknown) => ({
+							eq: mock(() => ({
+								data: [],
+								error: null,
+							})),
 						})),
 					})),
-				})),
-			})),
+				}
+			}),
 		})
 
 		let app = createApp(mockClient)
@@ -243,16 +326,21 @@ describe('GET /api/match-decisions/:personId', () => {
 
 	test('should return 500 when Supabase query fails', async () => {
 		let mockClient = createMockSupabaseClient({
-			from: mock((_table: string) => ({
-				select: mock((_columns: string) => ({
-					eq: mock((_column: string, _value: unknown) => ({
-						eq: mock(() => ({
-							data: null,
-							error: { message: 'Database error' },
+			from: mock((table: string) => {
+				if (table === 'people') {
+					return { select: mockOwnershipCheck() }
+				}
+				return {
+					select: mock((_columns: string) => ({
+						eq: mock((_column: string, _value: unknown) => ({
+							eq: mock(() => ({
+								data: null,
+								error: { message: 'Database error' },
+							})),
 						})),
 					})),
-				})),
-			})),
+				}
+			}),
 		})
 
 		let app = createApp(mockClient)

@@ -11,12 +11,11 @@ import {
 	GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 import type { SupabaseClient } from '../lib/supabase'
-import { findMatches } from '../services/matchingAlgorithm'
-import type { DeclineReason } from '../services/matchingAlgorithm'
 import type { PersonResponse } from '../schemas/people'
 import { personResponseSchema } from '../schemas/people'
 import { prompts, getPrompt } from '../prompts'
 import { createIntroduction } from '../services/introductions'
+import { findMatchesWithExclusions } from '../services/matchFinder'
 
 type Env = {
 	Variables: {
@@ -567,60 +566,14 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 					if (personError) throw new Error(personError.message)
 					if (!person) throw new Error('Person not found')
 
-					// Get ALL active people across all matchmakers (excluding the subject)
-					let { data: candidates, error: candidatesError } = await supabaseClient
-						.from('people')
-						.select('*')
-						.eq('active', true)
-						.neq('id', personId)
-					if (candidatesError) throw new Error(candidatesError.message)
-
-					// Get previous match decisions to exclude already-decided candidates
-					let { data: decisions, error: decisionsError } = await supabaseClient
-						.from('match_decisions')
-						.select('candidate_id, decision, decline_reason')
-						.eq('person_id', personId)
-						.eq('matchmaker_id', userId)
-					if (decisionsError) throw new Error(decisionsError.message)
-
-					// Get existing introductions to exclude already-introduced candidates
-					let { data: introductions, error: introError } = await supabaseClient
-						.from('introductions')
-						.select('person_a_id, person_b_id')
-						.or(`person_a_id.eq.${personId},person_b_id.eq.${personId}`)
-					if (introError) throw new Error(introError.message)
-
-					// Build exclude set from decisions + introductions
-					let excludeIds = new Set<string>()
-					for (let d of decisions || []) {
-						excludeIds.add(d.candidate_id)
-					}
-					for (let intro of introductions || []) {
-						let otherId =
-							intro.person_a_id === personId ? intro.person_b_id : intro.person_a_id
-						excludeIds.add(otherId)
-					}
-
-					// Collect decline reasons as revealed preferences
-					let declineReasons: DeclineReason[] = (decisions || [])
-						.filter(
-							(d: { decision: string; decline_reason?: string | null }) =>
-								d.decision === 'declined' && d.decline_reason
-						)
-						.map((d: { candidate_id: string; decline_reason: string }) => ({
-							candidateId: d.candidate_id,
-							reason: d.decline_reason,
-						}))
-
-					// Find matches using the algorithm with options
-					let matches = findMatches(
-						person as PersonResponse,
-						(candidates || []) as PersonResponse[],
+					let result = await findMatchesWithExclusions(supabaseClient, {
+						personId,
 						userId,
-						{ excludeIds, declineReasons, limit: 3 }
-					)
+						person: person as PersonResponse,
+					})
+					if (result.error) throw new Error(result.error.message)
 					return {
-						content: [{ type: 'text', text: JSON.stringify(matches, null, 2) }],
+						content: [{ type: 'text', text: JSON.stringify(result.matches, null, 2) }],
 					}
 				}
 
@@ -648,15 +601,29 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 					if (decision !== 'accepted' && decision !== 'declined') {
 						throw new Error('Invalid decision: must be "accepted" or "declined"')
 					}
+
+					// Verify the matchmaker owns the person
+					let { data: ownedPerson, error: ownedError } = await supabaseClient
+						.from('people')
+						.select('id')
+						.eq('id', person_id)
+						.eq('matchmaker_id', userId)
+						.maybeSingle()
+					if (ownedError) throw new Error(ownedError.message)
+					if (!ownedPerson) throw new Error('Person not found or not owned by you')
+
 					let { data, error } = await supabaseClient
 						.from('match_decisions')
-						.insert({
-							matchmaker_id: userId,
-							person_id,
-							candidate_id,
-							decision,
-							decline_reason: decline_reason || null,
-						})
+						.upsert(
+							{
+								matchmaker_id: userId,
+								person_id,
+								candidate_id,
+								decision,
+								decline_reason: decline_reason || null,
+							},
+							{ onConflict: 'matchmaker_id,person_id,candidate_id' }
+						)
 						.select()
 						.single()
 					if (error) throw new Error(error.message)
@@ -674,6 +641,17 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 					) {
 						throw new Error('Invalid arguments: person_id is required and must be a string')
 					}
+
+					// Verify the matchmaker owns the person
+					let { data: ownedPerson, error: ownedError } = await supabaseClient
+						.from('people')
+						.select('id')
+						.eq('id', args.person_id)
+						.eq('matchmaker_id', userId)
+						.maybeSingle()
+					if (ownedError) throw new Error(ownedError.message)
+					if (!ownedPerson) throw new Error('Person not found or not owned by you')
+
 					let { data, error } = await supabaseClient
 						.from('match_decisions')
 						.select('*')

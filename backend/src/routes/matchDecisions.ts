@@ -17,15 +17,34 @@ export let createMatchDecisionsRoutes = (
 		let userId = c.get('userId')
 		let data = c.req.valid('json')
 
+		// Verify the matchmaker owns the person
+		let { data: person, error: personError } = await supabaseClient
+			.from('people')
+			.select('id')
+			.eq('id', data.person_id)
+			.eq('matchmaker_id', userId)
+			.maybeSingle()
+
+		if (personError) {
+			return c.json({ error: personError.message }, 500)
+		}
+
+		if (!person) {
+			return c.json({ error: 'Person not found or not owned by you' }, 404)
+		}
+
 		let { data: decision, error } = await supabaseClient
 			.from('match_decisions')
-			.insert({
-				matchmaker_id: userId,
-				person_id: data.person_id,
-				candidate_id: data.candidate_id,
-				decision: data.decision,
-				decline_reason: data.decline_reason || null,
-			})
+			.upsert(
+				{
+					matchmaker_id: userId,
+					person_id: data.person_id,
+					candidate_id: data.candidate_id,
+					decision: data.decision,
+					decline_reason: data.decline_reason || null,
+				},
+				{ onConflict: 'matchmaker_id,person_id,candidate_id' }
+			)
 			.select()
 			.single()
 
@@ -40,6 +59,22 @@ export let createMatchDecisionsRoutes = (
 	app.get('/:personId', async c => {
 		let userId = c.get('userId')
 		let personId = c.req.param('personId')
+
+		// Verify the matchmaker owns the person
+		let { data: person, error: personError } = await supabaseClient
+			.from('people')
+			.select('id')
+			.eq('id', personId)
+			.eq('matchmaker_id', userId)
+			.maybeSingle()
+
+		if (personError) {
+			return c.json({ error: personError.message }, 500)
+		}
+
+		if (!person) {
+			return c.json({ error: 'Person not found or not owned by you' }, 404)
+		}
 
 		let { data: decisions, error } = await supabaseClient
 			.from('match_decisions')

@@ -214,7 +214,7 @@ describe('findMatches', () => {
 			makePerson({ id: '555e8400-e29b-41d4-a716-446655440055', name: 'Frank', gender: 'male', age: 32 }),
 		]
 
-		let matches = findMatches(subject, candidates, matchmakerId)
+		let matches = findMatches(subject, candidates, matchmakerId, { limit: 3 })
 
 		expect(matches).toHaveLength(3)
 		// Should be sorted by score, so top 3 are returned

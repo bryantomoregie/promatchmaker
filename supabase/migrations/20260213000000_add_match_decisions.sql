@@ -11,7 +11,7 @@ CREATE TABLE public.match_decisions (
   decline_reason TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   CONSTRAINT different_people CHECK (person_id != candidate_id),
-  CONSTRAINT unique_decision UNIQUE (person_id, candidate_id)
+  CONSTRAINT unique_decision UNIQUE (matchmaker_id, person_id, candidate_id)
 );
 
 CREATE INDEX idx_match_decisions_person_id ON public.match_decisions(person_id);
@@ -26,4 +26,9 @@ CREATE POLICY "Matchmakers can view their own decisions"
 
 CREATE POLICY "Matchmakers can insert their own decisions"
   ON public.match_decisions FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = matchmaker_id);
+
+CREATE POLICY "Matchmakers can update their own decisions"
+  ON public.match_decisions FOR UPDATE TO authenticated
+  USING (auth.uid() = matchmaker_id)
   WITH CHECK (auth.uid() = matchmaker_id);
