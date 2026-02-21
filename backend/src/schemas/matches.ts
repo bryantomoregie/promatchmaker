@@ -6,7 +6,6 @@ export let limitedPersonSchema = z.object({
 	age: z.number().nullable(),
 	location: z.string().nullable(),
 	gender: z.string().nullable(),
-	is_seed: z.boolean(),
 })
 
 export let matchResponseSchema = z.object({
