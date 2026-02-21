@@ -486,8 +486,9 @@ export let createMcpRoutes = (supabaseClient: SupabaseClient) => {
 						.eq('id', id)
 						.or(`matchmaker_a_id.eq.${userId},matchmaker_b_id.eq.${userId}`)
 						.select()
-						.single()
+						.maybeSingle()
 					if (error) throw new Error(error.message)
+					if (!data) throw new Error('Introduction not found')
 					return {
 						content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
 					}
