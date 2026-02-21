@@ -36,12 +36,14 @@ let lookingForSchema = z.object({
 	wantsChildren: z.boolean().nullable().optional(),
 })
 
+let dealBreakersSchema = z.array(
+	z.enum(['isDivorced', 'hasChildren', 'hasTattoos', 'hasPiercings', 'isSmoker'])
+)
+
 export let structuredPreferencesSchema = z.object({
 	aboutMe: aboutMeSchema.optional(),
 	lookingFor: lookingForSchema.optional(),
-	dealBreakers: z
-		.array(z.enum(['isDivorced', 'hasChildren', 'hasTattoos', 'hasPiercings', 'isSmoker']))
-		.optional(),
+	dealBreakers: dealBreakersSchema.optional(),
 })
 
 export type StructuredPreferences = z.infer<typeof structuredPreferencesSchema>
@@ -69,18 +71,13 @@ export let parsePreferences = (raw: Record<string, unknown> | null): StructuredP
 		}
 	}
 
-	if ('dealBreakers' in raw && Array.isArray(raw.dealBreakers)) {
-		let validValues = ['isDivorced', 'hasChildren', 'hasTattoos', 'hasPiercings', 'isSmoker']
-		let filtered = raw.dealBreakers.filter(
-			(v): v is string => typeof v === 'string' && validValues.includes(v)
-		)
-		let invalid = raw.dealBreakers.filter(
-			v => typeof v !== 'string' || !validValues.includes(v)
-		)
-		if (invalid.length > 0) {
-			console.warn('parsePreferences: invalid dealBreakers dropped', invalid)
+	if ('dealBreakers' in raw && raw.dealBreakers) {
+		let parsed = dealBreakersSchema.safeParse(raw.dealBreakers)
+		if (parsed.success) {
+			result.dealBreakers = parsed.data
+		} else {
+			console.warn('parsePreferences: invalid dealBreakers dropped', parsed.error.issues)
 		}
-		if (filtered.length > 0) result.dealBreakers = filtered
 	}
 
 	return result
