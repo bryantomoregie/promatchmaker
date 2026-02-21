@@ -105,17 +105,14 @@ describe('findMatches', () => {
 		let matches = findMatches(subject.id, allPeople, { matchmakerId })
 
 		expect(matches).toHaveLength(1)
-		let person = matches[0].person
-		expect(person.id).toBeDefined()
-		expect(person.name).toBe('Bob')
-		expect(person.age).toBeDefined()
-		expect(person.location).toBeDefined()
-		expect(person.gender).toBeDefined()
-		// Should NOT have sensitive fields
-		expect('notes' in person).toBe(false)
-		expect('preferences' in person).toBe(false)
-		expect('personality' in person).toBe(false)
-		expect('matchmaker_id' in person).toBe(false)
+		expect(matches[0].person).toEqual({
+			id: '111e8400-e29b-41d4-a716-446655440011',
+			name: 'Bob',
+			age: 28,
+			location: 'NYC',
+			gender: 'male',
+			is_seed: false,
+		})
 	})
 
 	test('should include match_explanation string', () => {
