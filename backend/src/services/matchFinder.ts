@@ -19,18 +19,19 @@ export let matchFinder = async (
 		return []
 	}
 
-	// Fetch prior decisions to build the exclusion set
+	// Fetch declined decisions to build the exclusion set
 	let { data: decisions } = await supabaseClient
 		.from('match_decisions')
 		.select('candidate_id')
 		.eq('person_id', personId)
 		.eq('matchmaker_id', matchmakerId)
+		.eq('decision', 'declined')
 
 	let excludeIds = new Set<string>(
 		(decisions || []).map((d: { candidate_id: string }) => d.candidate_id)
 	)
 
-	// Exclude already-reviewed candidates
+	// Exclude declined candidates (accepted candidates remain visible)
 	let eligiblePeople = (allPeople || []).filter(p => !excludeIds.has(p.id))
 
 	return findMatches(personId, eligiblePeople)
