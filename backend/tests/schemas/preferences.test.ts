@@ -21,23 +21,13 @@ describe('aboutMeSchema', () => {
 			hasPiercings: false,
 			isSmoker: false,
 			occupation: 'Software Engineer',
-			income: '100k-200k',
+			income: 'high',
 		})
 		expect(result.success).toBe(true)
 	})
 
 	test('should accept an empty object (all fields optional)', () => {
 		let result = aboutMeSchema.safeParse({})
-		expect(result.success).toBe(true)
-	})
-
-	test('should accept nullable fields', () => {
-		let result = aboutMeSchema.safeParse({
-			height: null,
-			build: null,
-			religion: null,
-			hasChildren: null,
-		})
 		expect(result.success).toBe(true)
 	})
 
@@ -57,7 +47,7 @@ describe('aboutMeSchema', () => {
 	})
 
 	test('should accept all valid build values', () => {
-		let builds = ['slim', 'athletic', 'average', 'curvy', 'heavyset']
+		let builds = ['slim', 'average', 'athletic', 'heavy']
 		for (let build of builds) {
 			let result = aboutMeSchema.safeParse({ build })
 			expect(result.success).toBe(true)
@@ -65,7 +55,7 @@ describe('aboutMeSchema', () => {
 	})
 
 	test('should accept all valid income values', () => {
-		let incomes = ['<30k', '30k-60k', '60k-100k', '100k-200k', '>200k']
+		let incomes = ['high', 'moderate', 'low']
 		for (let income of incomes) {
 			let result = aboutMeSchema.safeParse({ income })
 			expect(result.success).toBe(true)
@@ -78,10 +68,10 @@ describe('lookingForSchema', () => {
 		let result = lookingForSchema.safeParse({
 			ageRange: { min: 25, max: 40 },
 			heightRange: { min: 160, max: 185 },
-			fitnessPreference: ['active', 'very_active'],
+			fitnessPreference: 'active',
 			ethnicityPreference: ['East Asian', 'South Asian'],
-			incomePreference: ['60k-100k', '100k-200k'],
-			religionRequired: false,
+			incomePreference: 'high',
+			religionRequired: 'Christian',
 			wantsChildren: true,
 		})
 		expect(result.success).toBe(true)
@@ -94,23 +84,22 @@ describe('lookingForSchema', () => {
 
 	test('should accept nullable fields', () => {
 		let result = lookingForSchema.safeParse({
-			ageRange: null,
-			fitnessPreference: null,
-			ethnicityPreference: null,
+			religionRequired: null,
+			wantsChildren: null,
 		})
 		expect(result.success).toBe(true)
 	})
 
-	test('should reject invalid fitnessPreference values', () => {
+	test('should reject invalid fitnessPreference value', () => {
 		let result = lookingForSchema.safeParse({
-			fitnessPreference: ['gym_rat'],
+			fitnessPreference: 'gym_rat',
 		})
 		expect(result.success).toBe(false)
 	})
 
-	test('should reject invalid incomePreference values', () => {
+	test('should reject invalid incomePreference value', () => {
 		let result = lookingForSchema.safeParse({
-			incomePreference: ['wealthy'],
+			incomePreference: 'wealthy',
 		})
 		expect(result.success).toBe(false)
 	})
@@ -122,22 +111,22 @@ describe('structuredPreferencesSchema', () => {
 			aboutMe: {
 				height: 170,
 				build: 'average',
-				fitnessLevel: 'moderate',
+				fitnessLevel: 'active',
 				religion: 'Christian',
 				hasChildren: false,
 				occupation: 'Teacher',
-				income: '30k-60k',
+				income: 'moderate',
 			},
 			lookingFor: {
 				ageRange: { min: 28, max: 42 },
-				religionRequired: true,
+				religionRequired: 'Christian',
 				wantsChildren: true,
 			},
-			dealBreakers: ['smoking', 'no job'],
+			dealBreakers: ['isDivorced', 'isSmoker'],
 		})
 		expect(result.success).toBe(true)
 		if (result.success) {
-			expect(result.data.dealBreakers).toEqual(['smoking', 'no job'])
+			expect(result.data.dealBreakers).toEqual(['isDivorced', 'isSmoker'])
 		}
 	})
 
@@ -148,7 +137,7 @@ describe('structuredPreferencesSchema', () => {
 
 	test('should accept object with only dealBreakers', () => {
 		let result = structuredPreferencesSchema.safeParse({
-			dealBreakers: ['drugs', 'gambling'],
+			dealBreakers: ['hasChildren', 'hasTattoos'],
 		})
 		expect(result.success).toBe(true)
 	})
@@ -159,39 +148,51 @@ describe('structuredPreferencesSchema', () => {
 		})
 		expect(result.success).toBe(false)
 	})
+
+	test('should reject invalid dealBreaker enum values', () => {
+		let result = structuredPreferencesSchema.safeParse({
+			dealBreakers: ['not_a_real_dealbreaker'],
+		})
+		expect(result.success).toBe(false)
+	})
 })
 
 describe('parsePreferences', () => {
 	test('should return parsed preferences for valid input', () => {
 		let raw = {
 			aboutMe: { height: 175, build: 'athletic' },
-			dealBreakers: ['smokers'],
+			dealBreakers: ['isSmoker'],
 		}
 		let result = parsePreferences(raw)
-		expect(result).not.toBeNull()
-		expect(result?.aboutMe?.height).toBe(175)
-		expect(result?.dealBreakers).toEqual(['smokers'])
+		expect(result.aboutMe?.height).toBe(175)
+		expect(result.dealBreakers).toEqual(['isSmoker'])
 	})
 
-	test('should return null for invalid input', () => {
+	test('should drop invalid aboutMe section', () => {
 		let raw = { aboutMe: { build: 'gigantic' } }
 		let result = parsePreferences(raw)
-		expect(result).toBeNull()
+		expect(result.aboutMe).toBeUndefined()
 	})
 
-	test('should return null for null input', () => {
+	test('should return empty object for null input', () => {
 		let result = parsePreferences(null)
-		expect(result).toBeNull()
-	})
-
-	test('should return null for non-object input', () => {
-		let result = parsePreferences('not an object')
-		expect(result).toBeNull()
+		expect(result).toEqual({})
 	})
 
 	test('should return empty preferences for empty object', () => {
 		let result = parsePreferences({})
-		expect(result).not.toBeNull()
 		expect(result).toEqual({})
+	})
+
+	test('should keep valid sections and drop invalid ones', () => {
+		let raw = {
+			aboutMe: { build: 'INVALID' },
+			lookingFor: { wantsChildren: true },
+			dealBreakers: ['unknown_thing'],
+		}
+		let result = parsePreferences(raw)
+		expect(result.aboutMe).toBeUndefined()
+		expect(result.lookingFor).toEqual({ wantsChildren: true })
+		expect(result.dealBreakers).toBeUndefined()
 	})
 })
