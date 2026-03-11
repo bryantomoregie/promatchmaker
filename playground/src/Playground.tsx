@@ -98,6 +98,23 @@ const WIDGETS = [
     ),
   },
   {
+    label: 'list_feedback',
+    src: '/feedback-widget.html',
+    payload: JSON.stringify(
+      {
+        structuredContent: {
+          introduction_id: 'intro-1',
+          feedback: [
+            { id: 'fb-1', introduction_id: 'intro-1', from_person_id: 'mock-1', content: "Really enjoyed the evening. We talked for hours and I'd love to see them again.", sentiment: 'positive', created_at: '2026-02-03T00:00:00Z', from_person: { id: 'mock-1', name: 'Jordan Lee' } },
+            { id: 'fb-2', introduction_id: 'intro-1', from_person_id: 'mock-2', content: "Jordan is lovely but I'm not sure there's a romantic spark. Open to a second date though.", sentiment: 'neutral', created_at: '2026-02-04T00:00:00Z', from_person: { id: 'mock-2', name: 'Morgan Patel' } },
+          ],
+        },
+      },
+      null,
+      2
+    ),
+  },
+  {
     label: 'list_people',
     src: '/people-widget.html',
     payload: JSON.stringify(

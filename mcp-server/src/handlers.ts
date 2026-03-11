@@ -140,8 +140,17 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 
 		list_feedback: async args => {
 			let validated = validateListFeedbackArgs(args)
-			let result = await apiClient.listFeedback(validated.introduction_id)
-			return successResult(result)
+			let feedback = await apiClient.listFeedback(validated.introduction_id)
+			let people = await apiClient.listPeople()
+			const personMap = Object.fromEntries(people.map(p => [p.id, p]))
+			let enriched = feedback.map(f => ({
+				...f,
+				from_person: personMap[f.from_person_id] ?? null,
+			}))
+			return {
+				content: [{ type: 'text', text: `${feedback.length} feedback response${feedback.length === 1 ? '' : 's'}` }],
+				structuredContent: { feedback: enriched, introduction_id: validated.introduction_id },
+			}
 		},
 
 		get_feedback: async args => {
