@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp, useHostStyles, useDocumentTheme } from '@modelcontextprotocol/ext-apps/react'
+import { useToolResultBuffer } from './useToolResult'
 import { AppsSDKUIProvider } from '@openai/apps-sdk-ui/components/AppsSDKUIProvider'
 import { EmptyMessage } from '@openai/apps-sdk-ui/components/EmptyMessage'
 import '@openai/apps-sdk-ui/css'
@@ -99,18 +100,22 @@ export function FeedbackWidget() {
 	const [feedback, setFeedback] = useState<FeedbackEntry[]>([])
 	const [hasResult, setHasResult] = useState(false)
 
+	function applyResult(params: unknown) {
+		const data = (params as { structuredContent?: { feedback?: FeedbackEntry[] } }).structuredContent
+		setHasResult(true)
+		if (data?.feedback) setFeedback(data.feedback)
+	}
+
 	const { app, isConnected, error } = useApp({
 		appInfo: { name: 'matchmaker-feedback', version: '1.0.0' },
 		capabilities: {},
 		onAppCreated: app => {
-			app.ontoolinput = () => { setHasResult(false); setFeedback([]) }
-			app.ontoolresult = result => {
-				const data = (result as { structuredContent?: { feedback?: FeedbackEntry[] } }).structuredContent
-				setHasResult(true)
-				if (data?.feedback) setFeedback(data.feedback)
-			}
+			app.ontoolinput = () => { setHasResult(false); setFeedback([]); clearBuffer() }
+			app.ontoolresult = applyResult
 		},
 	})
+
+	const { clearBuffer } = useToolResultBuffer(isConnected, applyResult)
 
 	useHostStyles(app, app?.getHostContext())
 	const theme = useDocumentTheme()

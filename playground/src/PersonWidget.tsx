@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp, useHostStyles, useDocumentTheme } from '@modelcontextprotocol/ext-apps/react'
+import { useToolResultBuffer } from './useToolResult'
 import { AppsSDKUIProvider } from '@openai/apps-sdk-ui/components/AppsSDKUIProvider'
 import { EmptyMessage } from '@openai/apps-sdk-ui/components/EmptyMessage'
 import '@openai/apps-sdk-ui/css'
@@ -74,21 +75,22 @@ export function PersonWidget() {
 	const [person, setPerson] = useState<Person | null>(null)
 	const [hasResult, setHasResult] = useState(false)
 
-	const { app, error } = useApp({
+	function applyResult(params: unknown) {
+		const data = (params as { structuredContent?: { person?: Person } }).structuredContent
+		setHasResult(true)
+		if (data?.person) setPerson(data.person)
+	}
+
+	const { app, isConnected, error } = useApp({
 		appInfo: { name: 'matchmaker-person', version: '1.0.0' },
 		capabilities: {},
 		onAppCreated: (app) => {
-			app.ontoolinput = () => {
-				setHasResult(false)
-				setPerson(null)
-			}
-			app.ontoolresult = (result) => {
-				const data = (result as { structuredContent?: { person?: Person } }).structuredContent
-				setHasResult(true)
-				if (data?.person) setPerson(data.person)
-			}
+			app.ontoolinput = () => { setHasResult(false); setPerson(null); clearBuffer() }
+			app.ontoolresult = applyResult
 		},
 	})
+
+	const { clearBuffer } = useToolResultBuffer(isConnected, applyResult)
 
 	useHostStyles(app, app?.getHostContext())
 	const theme = useDocumentTheme()
