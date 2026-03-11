@@ -78,18 +78,32 @@ class MockApiClient {
 	async createIntroduction(a: string, b: string, notes?: string): Promise<Introduction> {
 		return { id: 'mock-intro-1', matchmaker_id: 'mm-1', person_a_id: a, person_b_id: b, status: 'pending', notes, created_at: '', updated_at: '' }
 	}
-	async listIntroductions(): Promise<Introduction[]> { return [] }
+	async listIntroductions(): Promise<Introduction[]> {
+		return [
+			{ id: 'intro-1', matchmaker_id: 'mm-1', person_a_id: 'mock-1', person_b_id: 'mock-2', status: 'dating', notes: 'Great first date at Bar Agricole. Both expressed interest in a second meeting.', created_at: '2026-01-10T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
+			{ id: 'intro-2', matchmaker_id: 'mm-1', person_a_id: 'mock-1', person_b_id: 'mock-3', status: 'pending', notes: 'Intro email sent. Waiting on Jordan to respond.', created_at: '2026-02-20T00:00:00Z', updated_at: '2026-02-20T00:00:00Z' },
+			{ id: 'intro-3', matchmaker_id: 'mm-1', person_a_id: 'mock-2', person_b_id: 'mock-3', status: 'declined', notes: 'Morgan felt the distance was too much of an obstacle.', created_at: '2025-11-05T00:00:00Z', updated_at: '2025-11-12T00:00:00Z' },
+		]
+	}
 	async updateIntroduction(id: string, updates: object): Promise<Introduction> {
 		return { id, matchmaker_id: 'mm-1', person_a_id: '', person_b_id: '', status: 'pending', created_at: '', updated_at: '' }
 	}
 	async deletePerson(id: string): Promise<Person> { return this.getPerson(id) }
 	async getIntroduction(id: string): Promise<Introduction> {
-		return { id, matchmaker_id: 'mm-1', person_a_id: '', person_b_id: '', status: 'pending', created_at: '', updated_at: '' }
+		const intros = await this.listIntroductions()
+		const intro = intros.find(i => i.id === id)
+		if (!intro) throw new Error(`Introduction ${id} not found`)
+		return intro
 	}
 	async submitFeedback(introduction_id: string, from_person_id: string, content: string, sentiment?: string): Promise<Feedback> {
-		return { id: 'mock-fb-1', introduction_id, from_person_id, content, sentiment, created_at: '' }
+		return { id: 'mock-fb-1', introduction_id, from_person_id, content, sentiment, created_at: new Date().toISOString() }
 	}
-	async listFeedback(introduction_id: string): Promise<Feedback[]> { return [] }
+	async listFeedback(introduction_id: string): Promise<Feedback[]> {
+		return [
+			{ id: 'fb-1', introduction_id, from_person_id: 'mock-1', content: `Really enjoyed the evening. We talked for hours and I'd love to see them again.`, sentiment: 'positive', created_at: '2026-02-03T00:00:00Z' },
+			{ id: 'fb-2', introduction_id, from_person_id: 'mock-2', content: `Jordan is lovely but I'm not sure there's a romantic spark. Open to a second date though.`, sentiment: 'neutral', created_at: '2026-02-04T00:00:00Z' },
+		]
+	}
 	async getFeedback(id: string): Promise<Feedback> {
 		return { id, introduction_id: '', from_person_id: '', content: '', created_at: '' }
 	}

@@ -68,8 +68,18 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 		},
 
 		list_introductions: async () => {
-			let result = await apiClient.listIntroductions()
-			return successResult(result)
+			let introductions = await apiClient.listIntroductions()
+			let people = await apiClient.listPeople()
+			const personMap = Object.fromEntries(people.map(p => [p.id, p]))
+			let enriched = introductions.map(intro => ({
+				...intro,
+				person_a: personMap[intro.person_a_id] ?? null,
+				person_b: personMap[intro.person_b_id] ?? null,
+			}))
+			return {
+				content: [{ type: 'text', text: `${introductions.length} introduction${introductions.length === 1 ? '' : 's'}` }],
+				structuredContent: { introductions: enriched },
+			}
 		},
 
 		update_introduction: async args => {

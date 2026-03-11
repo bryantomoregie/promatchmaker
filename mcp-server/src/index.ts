@@ -17,6 +17,8 @@ const MATCHES_WIDGET_URI = 'ui://matches/widget.html'
 const matchesWidgetHtml = readFileSync(join(__dirname, 'widget', 'widget.html'), 'utf-8')
 const PERSON_WIDGET_URI = 'ui://person/widget.html'
 const personWidgetHtml = readFileSync(join(__dirname, 'widget', 'person-widget.html'), 'utf-8')
+const INTRODUCTIONS_WIDGET_URI = 'ui://introductions/widget.html'
+const introductionsWidgetHtml = readFileSync(join(__dirname, 'widget', 'introductions-widget.html'), 'utf-8')
 import { loadConfig } from './config.js'
 import { ApiClient } from './api.js'
 import { createToolHandlers, isValidToolName } from './handlers.js'
@@ -105,6 +107,7 @@ export function createServer(apiClient: ApiClient) {
 			{
 				name: 'list_introductions',
 				description: 'List all introductions for the matchmaker',
+				_meta: { ui: { resourceUri: INTRODUCTIONS_WIDGET_URI } },
 				inputSchema: {
 					type: 'object',
 					properties: {},
@@ -263,6 +266,11 @@ export function createServer(apiClient: ApiClient) {
 				name: 'Person Profile Widget',
 				mimeType: 'text/html;profile=mcp-app',
 			},
+			{
+				uri: INTRODUCTIONS_WIDGET_URI,
+				name: 'Introductions Dashboard Widget',
+				mimeType: 'text/html;profile=mcp-app',
+			},
 		],
 	}))
 
@@ -288,6 +296,9 @@ export function createServer(apiClient: ApiClient) {
 					},
 				],
 			}
+		}
+		if (request.params.uri === INTRODUCTIONS_WIDGET_URI) {
+			return { contents: [{ uri: INTRODUCTIONS_WIDGET_URI, mimeType: 'text/html;profile=mcp-app', text: introductionsWidgetHtml }] }
 		}
 		throw new Error(`Resource not found: ${request.params.uri}`)
 	})
