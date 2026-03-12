@@ -16,7 +16,10 @@ export function useToolResultBuffer(
 	const onResultRef = useRef(onResult)
 	onResultRef.current = onResult
 
-	// Capture any tool-result that arrives before the SDK processes it
+	// Capture any tool-result that arrives before the SDK processes it.
+	// Only the most recent result is buffered — if two results arrive before
+	// isConnected, the first is overwritten. This is acceptable because each
+	// tool invocation replaces the previous widget state anyway.
 	useEffect(() => {
 		function onMessage(e: MessageEvent) {
 			if (e.data?.method === 'ui/notifications/tool-result') {

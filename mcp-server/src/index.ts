@@ -34,11 +34,11 @@ const introductionWidgetHtml = loadWidget('introduction-widget.html')
 const FEEDBACK_WIDGET_URI = 'ui://feedback/widget.html'
 const feedbackWidgetHtml = loadWidget('feedback-widget.html')
 import { loadConfig } from './config.js'
-import { ApiClient } from './api.js'
+import { ApiClient, IApiClient } from './api.js'
 import { createToolHandlers, isValidToolName } from './handlers.js'
 import { prompts, getPrompt } from './prompts.js'
 
-export function createServer(apiClient: ApiClient) {
+export function createServer(apiClient: IApiClient) {
 	let server = new Server(
 		{
 			name: 'matchmaker-mcp',

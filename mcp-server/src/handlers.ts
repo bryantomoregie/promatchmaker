@@ -1,4 +1,4 @@
-import type { ApiClient } from './api.js'
+import type { IApiClient } from './api.js'
 import type { ToolName } from './tools.js'
 import {
 	validateAddPersonArgs,
@@ -28,7 +28,7 @@ function successResult(data: unknown): ToolResult {
 	}
 }
 
-export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolHandler> {
+export function createToolHandlers(apiClient: IApiClient): Record<ToolName, ToolHandler> {
 	return {
 		add_person: async args => {
 			let validated = validateAddPersonArgs(args)
@@ -94,10 +94,8 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 			let raw = await apiClient.findMatches(validated.person_id)
 			let matches = raw.map(m => ({
 				person: m.person,
-				about: (m as unknown as { about?: string }).about
-					?? (m.match_reasons ?? []).slice(0, 2).join('. '),
-				matchmaker_note: (m as unknown as { matchmaker_note?: string }).matchmaker_note
-					?? (m.match_reasons ?? []).slice(2).join(' '),
+				about: m.about ?? (m.match_reasons ?? []).slice(0, 2).join('. '),
+				matchmaker_note: m.matchmaker_note ?? (m.match_reasons ?? []).slice(2).join(' '),
 			}))
 			return {
 				content: [{ type: 'text', text: `Found ${matches.length} match${matches.length === 1 ? '' : 'es'}.` }],
@@ -114,13 +112,11 @@ export function createToolHandlers(apiClient: ApiClient): Record<ToolName, ToolH
 		get_introduction: async args => {
 			let validated = validateGetIntroductionArgs(args)
 			let intro = await apiClient.getIntroduction(validated.id)
-			let people = await apiClient.listPeople()
-			const personMap = Object.fromEntries(people.map(p => [p.id, p]))
-			let enriched = {
-				...intro,
-				person_a: personMap[intro.person_a_id] ?? null,
-				person_b: personMap[intro.person_b_id] ?? null,
-			}
+			const [person_a, person_b] = await Promise.all([
+				apiClient.getPerson(intro.person_a_id).catch(() => null),
+				apiClient.getPerson(intro.person_b_id).catch(() => null),
+			])
+			let enriched = { ...intro, person_a, person_b }
 			return {
 				content: [{ type: 'text', text: `Introduction between ${enriched.person_a?.name ?? intro.person_a_id} and ${enriched.person_b?.name ?? intro.person_b_id} — status: ${intro.status}` }],
 				structuredContent: { introduction: enriched },

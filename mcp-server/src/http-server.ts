@@ -2,14 +2,14 @@ import { createServer as createHttpServer, type IncomingMessage, type ServerResp
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { loadConfig } from './config.js'
 import { ApiClient } from './api.js'
+import type { Person, Match, Introduction, Feedback, IApiClient } from './api.js'
 import { createServer } from './index.js'
-import type { Person, Match, Introduction, Feedback } from './api.js'
 
 // ---------------------------------------------------------------------------
 // Mock API client — used when MOCK=true, no backend needed
 // ---------------------------------------------------------------------------
 
-class MockApiClient {
+class MockApiClient implements IApiClient {
 	private people: Person[] = [
 		{
 			id: 'mock-1', name: 'Jordan Lee', matchmaker_id: 'mm-1',
@@ -75,18 +75,22 @@ class MockApiClient {
 				}
 			})
 	}
+	private introductions: Introduction[] = [
+		{ id: 'intro-1', matchmaker_id: 'mm-1', person_a_id: 'mock-1', person_b_id: 'mock-2', status: 'dating', notes: 'Great first date at Bar Agricole. Both expressed interest in a second meeting.', created_at: '2026-01-10T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
+		{ id: 'intro-2', matchmaker_id: 'mm-1', person_a_id: 'mock-1', person_b_id: 'mock-3', status: 'pending', notes: 'Intro email sent. Waiting on Jordan to respond.', created_at: '2026-02-20T00:00:00Z', updated_at: '2026-02-20T00:00:00Z' },
+		{ id: 'intro-3', matchmaker_id: 'mm-1', person_a_id: 'mock-2', person_b_id: 'mock-3', status: 'declined', notes: 'Morgan felt the distance was too much of an obstacle.', created_at: '2025-11-05T00:00:00Z', updated_at: '2025-11-12T00:00:00Z' },
+	]
 	async createIntroduction(a: string, b: string, notes?: string): Promise<Introduction> {
-		return { id: 'mock-intro-1', matchmaker_id: 'mm-1', person_a_id: a, person_b_id: b, status: 'pending', notes, created_at: '', updated_at: '' }
+		const intro: Introduction = { id: `mock-intro-${Date.now()}`, matchmaker_id: 'mm-1', person_a_id: a, person_b_id: b, status: 'pending', notes, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+		this.introductions.push(intro)
+		return intro
 	}
-	async listIntroductions(): Promise<Introduction[]> {
-		return [
-			{ id: 'intro-1', matchmaker_id: 'mm-1', person_a_id: 'mock-1', person_b_id: 'mock-2', status: 'dating', notes: 'Great first date at Bar Agricole. Both expressed interest in a second meeting.', created_at: '2026-01-10T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
-			{ id: 'intro-2', matchmaker_id: 'mm-1', person_a_id: 'mock-1', person_b_id: 'mock-3', status: 'pending', notes: 'Intro email sent. Waiting on Jordan to respond.', created_at: '2026-02-20T00:00:00Z', updated_at: '2026-02-20T00:00:00Z' },
-			{ id: 'intro-3', matchmaker_id: 'mm-1', person_a_id: 'mock-2', person_b_id: 'mock-3', status: 'declined', notes: 'Morgan felt the distance was too much of an obstacle.', created_at: '2025-11-05T00:00:00Z', updated_at: '2025-11-12T00:00:00Z' },
-		]
-	}
-	async updateIntroduction(id: string, updates: object): Promise<Introduction> {
-		return { id, matchmaker_id: 'mm-1', person_a_id: '', person_b_id: '', status: 'pending', created_at: '', updated_at: '' }
+	async listIntroductions(): Promise<Introduction[]> { return this.introductions }
+	async updateIntroduction(id: string, updates: { status?: 'pending' | 'accepted' | 'declined' | 'dating' | 'ended'; notes?: string }): Promise<Introduction> {
+		const intro = this.introductions.find(i => i.id === id)
+		if (!intro) throw new Error(`Introduction ${id} not found`)
+		Object.assign(intro, updates, { updated_at: new Date().toISOString() })
+		return intro
 	}
 	async deletePerson(id: string): Promise<Person> { return this.getPerson(id) }
 	async getIntroduction(id: string): Promise<Introduction> {
@@ -122,7 +126,7 @@ const apiClient = isMock
 
 if (isMock) console.log('Running in MOCK mode — no backend required')
 
-const mcpServer = createServer(apiClient as unknown as ApiClient)
+const mcpServer = createServer(apiClient)
 
 const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })
 await mcpServer.connect(transport)

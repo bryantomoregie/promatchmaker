@@ -179,7 +179,7 @@ export function PeopleWidget() {
 		)
 	}
 
-	const isLoading = !isConnected || !hasResult
+	const isLoading = !hasResult
 
 	return (
 		<AppsSDKUIProvider>
