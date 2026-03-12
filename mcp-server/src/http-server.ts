@@ -165,11 +165,6 @@ function json(res: ServerResponse, status: number, body: unknown) {
 	res.end(payload)
 }
 
-function html(res: ServerResponse, status: number, body: string) {
-	res.writeHead(status, { 'Content-Type': 'text/html' })
-	res.end(body)
-}
-
 // ---------------------------------------------------------------------------
 // HTTP server
 // ---------------------------------------------------------------------------
@@ -242,12 +237,9 @@ const httpServer = createHttpServer(async (req, res) => {
 		redirectUrl.searchParams.set('code', code)
 		if (state) redirectUrl.searchParams.set('state', state)
 
-		return html(res, 200, `<!doctype html><html><head>
-<meta http-equiv="refresh" content="0;url=${redirectUrl}">
-<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5}
-.card{background:#fff;padding:2rem;border-radius:12px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.1)}</style>
-</head><body><div class="card"><h2>✓ Authorized</h2><p>Connecting to Matchmaker...</p></div>
-<script>window.location.href="${redirectUrl}"</script></body></html>`)
+		res.writeHead(302, { Location: redirectUrl.toString() })
+		res.end()
+		return
 	}
 
 	// OAuth: token exchange

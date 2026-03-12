@@ -13,16 +13,26 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+function loadWidget(filename: string): string {
+	const path = join(__dirname, 'widget', filename)
+	try {
+		return readFileSync(path, 'utf-8')
+	} catch {
+		throw new Error(`Widget file not found: ${path}. Run 'npm run build:widget' in the playground directory first.`)
+	}
+}
+
 const MATCHES_WIDGET_URI = 'ui://matches/widget.html'
-const matchesWidgetHtml = readFileSync(join(__dirname, 'widget', 'widget.html'), 'utf-8')
+const matchesWidgetHtml = loadWidget('widget.html')
 const PERSON_WIDGET_URI = 'ui://person/widget.html'
-const personWidgetHtml = readFileSync(join(__dirname, 'widget', 'person-widget.html'), 'utf-8')
+const personWidgetHtml = loadWidget('person-widget.html')
 const INTRODUCTIONS_WIDGET_URI = 'ui://introductions/widget.html'
-const introductionsWidgetHtml = readFileSync(join(__dirname, 'widget', 'introductions-widget.html'), 'utf-8')
+const introductionsWidgetHtml = loadWidget('introductions-widget.html')
 const INTRODUCTION_WIDGET_URI = 'ui://introduction/widget.html'
-const introductionWidgetHtml = readFileSync(join(__dirname, 'widget', 'introduction-widget.html'), 'utf-8')
+const introductionWidgetHtml = loadWidget('introduction-widget.html')
 const FEEDBACK_WIDGET_URI = 'ui://feedback/widget.html'
-const feedbackWidgetHtml = readFileSync(join(__dirname, 'widget', 'feedback-widget.html'), 'utf-8')
+const feedbackWidgetHtml = loadWidget('feedback-widget.html')
 import { loadConfig } from './config.js'
 import { ApiClient } from './api.js'
 import { createToolHandlers, isValidToolName } from './handlers.js'
