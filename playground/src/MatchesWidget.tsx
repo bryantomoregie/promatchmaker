@@ -222,7 +222,7 @@ export function MatchesWidget() {
 					boxSizing: 'border-box',
 				}}
 			>
-				{!isConnected || !hasResult ? (
+				{!hasResult ? (
 					<>
 						<div
 							style={{

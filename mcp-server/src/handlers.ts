@@ -68,8 +68,10 @@ export function createToolHandlers(apiClient: IApiClient): Record<ToolName, Tool
 		},
 
 		list_introductions: async () => {
-			let introductions = await apiClient.listIntroductions()
-			let people = await apiClient.listPeople()
+			let [introductions, people] = await Promise.all([
+				apiClient.listIntroductions(),
+				apiClient.listPeople(),
+			])
 			const personMap = Object.fromEntries(people.map(p => [p.id, p]))
 			let enriched = introductions.map(intro => ({
 				...intro,
@@ -137,8 +139,9 @@ export function createToolHandlers(apiClient: IApiClient): Record<ToolName, Tool
 		list_feedback: async args => {
 			let validated = validateListFeedbackArgs(args)
 			let feedback = await apiClient.listFeedback(validated.introduction_id)
-			let people = await apiClient.listPeople()
-			const personMap = Object.fromEntries(people.map(p => [p.id, p]))
+			const personIds = [...new Set(feedback.map(f => f.from_person_id))]
+			const people = await Promise.all(personIds.map(id => apiClient.getPerson(id).catch(() => null)))
+			const personMap = Object.fromEntries(personIds.map((id, i) => [id, people[i]]))
 			let enriched = feedback.map(f => ({
 				...f,
 				from_person: personMap[f.from_person_id] ?? null,
